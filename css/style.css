@@ -1,0 +1,92 @@
+/* ===== La Paya - estilos ===== */
+:root{
+  --verde:#1b7a4b; --verde-osc:#125c38; --rojo:#c0392b; --ambar:#e08b18;
+  --texto:#22201d; --suave:#6f6a63; --linea:#e3ded6;
+  --fondo:#faf7f2; --panel:#fff;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.5;
+}
+header{
+  background:var(--verde); color:#fff; padding:14px 16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+header h1{margin:0; font-size:1.15rem; letter-spacing:.3px}
+header .sub{font-size:.8rem; opacity:.85}
+header .der{margin-left:auto; display:flex; gap:8px; align-items:center}
+header a{color:#fff; font-size:.85rem}
+
+/* pestañas */
+nav.tabs{
+  display:flex; gap:2px; overflow-x:auto; background:var(--verde-osc);
+  padding:0 8px; -webkit-overflow-scrolling:touch;
+}
+nav.tabs button{
+  background:transparent; border:0; color:#cfe8da; padding:11px 14px;
+  font-size:.88rem; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent;
+}
+nav.tabs button.on{color:#fff; border-bottom-color:#ffd36b; font-weight:600}
+
+main{padding:16px; max-width:1100px; margin:0 auto}
+section.tab{display:none}
+section.tab.on{display:block}
+
+h2{font-size:1.05rem; margin:0 0 12px}
+h3{font-size:.95rem; margin:18px 0 8px; color:var(--suave)}
+
+.panel{background:var(--panel); border:1px solid var(--linea); border-radius:10px; padding:14px; margin-bottom:14px}
+
+/* tablas */
+.tabla-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
+table{border-collapse:collapse; width:100%; font-size:.88rem; background:var(--panel)}
+th,td{border-bottom:1px solid var(--linea); padding:7px 9px; text-align:left; vertical-align:middle}
+th{background:#f1ece4; font-weight:600; white-space:nowrap; position:sticky; top:0}
+td.num,th.num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
+tr.total td{font-weight:700; background:#f6f2ea}
+
+/* botones y campos */
+button,.btn{
+  background:var(--verde); color:#fff; border:0; border-radius:7px;
+  padding:8px 13px; font-size:.87rem; cursor:pointer; font-family:inherit;
+}
+button:hover{filter:brightness(1.08)}
+button.sec{background:#e8e2d8; color:var(--texto)}
+button.peligro{background:var(--rojo)}
+button.mini{padding:4px 8px; font-size:.78rem}
+input,select,textarea{
+  font-family:inherit; font-size:.87rem; padding:7px 8px;
+  border:1px solid var(--linea); border-radius:6px; background:#fff; color:var(--texto);
+  max-width:100%;
+}
+input[type=number]{text-align:right}
+label{font-size:.82rem; color:var(--suave); display:block; margin-bottom:3px}
+.fila{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px}
+.fila > div{flex:1 1 150px}
+
+/* avisos y etiquetas */
+.pill{display:inline-block; padding:2px 8px; border-radius:99px; font-size:.75rem; font-weight:600}
+.pill.ok{background:#d9f0e2; color:var(--verde-osc)}
+.pill.no{background:#fadcd8; color:var(--rojo)}
+.pill.inv{background:#fdf0d5; color:#8a5a00}
+.aviso{padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:.87rem}
+.aviso.err{background:#fadcd8; color:#8c1f14}
+.aviso.ok{background:#d9f0e2; color:var(--verde-osc)}
+.vacio{color:var(--suave); font-style:italic; padding:10px 0}
+.debe{color:var(--rojo); font-weight:700}
+.saldado{color:var(--verde); font-weight:700}
+
+/* navegador de dias */
+.navdia{display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:14px}
+.navdia .fecha{font-size:1.05rem; font-weight:700; min-width:210px; text-align:center; text-transform:capitalize}
+
+.tarjetas{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px}
+.dato{font-size:1.5rem; font-weight:700}
+.dato small{display:block; font-size:.78rem; font-weight:400; color:var(--suave)}
+
+@media (max-width:560px){
+  main{padding:10px}
+  .panel{padding:11px}
+  header h1{font-size:1rem}
+}

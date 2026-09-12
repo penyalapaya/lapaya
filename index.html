@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Peña La Paya</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1 id="tituloPena">Peña La Paya</h1>
+    <div class="sub" id="subtitulo">Fiestas</div>
+  </div>
+  <div class="der"><a href="admin.html">Administración</a></div>
+</header>
+
+<nav class="tabs">
+  <button data-tab="hoy"      class="on">Hoy</button>
+  <button data-tab="calendario">Calendario</button>
+  <button data-tab="turnos">Turnos</button>
+  <button data-tab="cuentas">Cuentas</button>
+  <button data-tab="mias">Lo mío</button>
+  <button data-tab="cobros">Cobros</button>
+</nav>
+
+<main>
+  <div id="estado"></div>
+
+  <!-- ============ HOY ============ -->
+  <section class="tab on" id="tab-hoy">
+    <div class="navdia">
+      <button class="sec" id="diaAnt">‹ Anterior</button>
+      <div class="fecha" id="diaFecha">—</div>
+      <button class="sec" id="diaSig">Siguiente ›</button>
+    </div>
+    <div id="resumenDia"></div>
+  </section>
+
+  <!-- ============ CALENDARIO ============ -->
+  <section class="tab" id="tab-calendario"><div id="calendario"></div></section>
+
+  <!-- ============ TURNOS ============ -->
+  <section class="tab" id="tab-turnos"><div id="turnos"></div></section>
+
+  <!-- ============ CUENTAS ============ -->
+  <section class="tab" id="tab-cuentas"><div id="cuentas"></div></section>
+
+  <!-- ============ LO MIO ============ -->
+  <section class="tab" id="tab-mias">
+    <div class="panel">
+      <label for="selPersona">Elige tu nombre</label>
+      <select id="selPersona"><option value="">—</option></select>
+    </div>
+    <div id="mias"></div>
+  </section>
+
+  <!-- ============ COBROS ============ -->
+  <section class="tab" id="tab-cobros">
+    <div class="panel">
+      <h2>Marcar quién ha pagado</h2>
+      <p style="font-size:.87rem;color:var(--suave);margin-top:0">
+        Si eres responsable de una comida, cena o de los gastos generales, introduce tu código
+        para poder marcar quién te ha pagado.
+      </p>
+      <div class="fila">
+        <div>
+          <label for="codigoResp">Código</label>
+          <input id="codigoResp" placeholder="tu palabra clave" autocomplete="off">
+        </div>
+        <div style="flex:0 0 auto"><button id="btnCodigo">Entrar</button></div>
+      </div>
+      <div id="avisoCobros"></div>
+    </div>
+    <div id="cobros"></div>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/publico.js"></script>
+</body>
+</html>

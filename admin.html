@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administración · La Paya</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Administración</h1>
+    <div class="sub">Peña La Paya</div>
+  </div>
+  <div class="der">
+    <a href="index.html">Ver la web</a>
+    <button class="sec" id="btnSalir" style="display:none">Salir</button>
+  </div>
+</header>
+
+<!-- ===== login ===== -->
+<div id="login">
+  <main style="max-width:360px">
+    <div class="panel" style="margin-top:40px">
+      <h2>Introduce el PIN</h2>
+      <div class="fila">
+        <div>
+          <input id="pin" type="password" inputmode="numeric" maxlength="10"
+                 placeholder="······" autocomplete="current-password"
+                 style="font-size:1.6rem; text-align:center; letter-spacing:8px; width:100%">
+        </div>
+      </div>
+      <button id="btnEntrar" style="width:100%">Entrar</button>
+      <div id="avisoLogin" style="margin-top:12px"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ===== panel ===== -->
+<div id="panel" style="display:none">
+<nav class="tabs">
+  <button data-tab="personas" class="on">Personas</button>
+  <button data-tab="dias">Días y precios</button>
+  <button data-tab="apuntes">Apuntar comidas</button>
+  <button data-tab="turnos">Turnos</button>
+  <button data-tab="gastos">Gastos generales</button>
+  <button data-tab="config">Ajustes</button>
+</nav>
+
+<main>
+  <div id="estado"></div>
+
+  <section class="tab on" id="tab-personas">
+    <div class="panel">
+      <h2>Añadir persona</h2>
+      <div class="fila">
+        <div><label for="nNombre">Nombre</label><input id="nNombre" placeholder="Nombre y apodo"></div>
+        <div><label for="nTipo">Tipo</label>
+          <select id="nTipo"><option value="socio">Socio</option><option value="invitado">Invitado</option></select></div>
+        <div id="cajaSocio" style="display:none"><label for="nSocio">Invitado de</label><select id="nSocio"></select></div>
+        <div style="flex:0 0 auto"><button id="btnAddPersona">Añadir</button></div>
+      </div>
+    </div>
+    <div class="panel"><h2>Socios</h2><div id="tablaSocios"></div></div>
+    <div class="panel"><h2>Invitados</h2><div id="tablaInvitados"></div></div>
+  </section>
+
+  <section class="tab" id="tab-dias">
+    <div class="panel">
+      <h2>Generar días de fiesta</h2>
+      <div class="fila">
+        <div><label for="fIni">Desde</label><input type="date" id="fIni"></div>
+        <div><label for="fFin">Hasta</label><input type="date" id="fFin"></div>
+        <div style="flex:0 0 auto"><button id="btnGenDias">Crear días</button></div>
+      </div>
+      <p style="font-size:.82rem;color:var(--suave);margin:0">No borra los días existentes; solo añade los que falten.</p>
+    </div>
+    <div id="listaDias"></div>
+  </section>
+
+  <section class="tab" id="tab-apuntes">
+    <div class="panel">
+      <div class="navdia">
+        <button class="sec" id="apAnt">‹</button>
+        <div class="fecha" id="apFecha">—</div>
+        <button class="sec" id="apSig">›</button>
+      </div>
+      <div id="avisoApuntes"></div>
+    </div>
+    <div id="matrizApuntes"></div>
+  </section>
+
+  <section class="tab" id="tab-turnos"><div id="adminTurnos"></div></section>
+
+  <section class="tab" id="tab-gastos">
+    <div class="panel">
+      <h2>Añadir gasto general</h2>
+      <div class="fila">
+        <div><label for="gConcepto">Concepto</label><input id="gConcepto" placeholder="Alquiler local, bebida..."></div>
+        <div><label for="gImporte">Importe €</label><input id="gImporte" type="number" step="0.01"></div>
+        <div><label for="gResp">Lo pagó</label><select id="gResp"></select></div>
+        <div style="flex:0 0 auto"><button id="btnAddGasto">Añadir</button></div>
+      </div>
+    </div>
+    <div class="panel"><h2>Gastos</h2><div id="tablaGastos"></div></div>
+    <div class="panel"><h2>Reparto entre socios</h2>
+      <p style="font-size:.82rem;color:var(--suave);margin-top:0">
+        El peso reparte los gastos. Con todos a 1 se divide a partes iguales; sube o baja un peso para ajustar.</p>
+      <div id="tablaReparto"></div>
+    </div>
+  </section>
+
+  <section class="tab" id="tab-config">
+    <div class="panel">
+      <h2>Ajustes generales</h2>
+      <div class="fila">
+        <div><label for="cNombre">Nombre de la peña</label><input id="cNombre"></div>
+        <div><label for="cTesorero">Código del tesorero</label><input id="cTesorero"></div>
+        <div style="flex:0 0 auto"><button id="btnGuardarConfig">Guardar</button></div>
+      </div>
+      <div id="avisoConfig"></div>
+    </div>
+    <div class="panel">
+      <h2>Códigos de los responsables de cocina</h2>
+      <p style="font-size:.82rem;color:var(--suave);margin-top:0">
+        Manda a cada cocinero su código: con él entra en la pestaña «Cobros» de la web y marca quién le ha pagado.</p>
+      <div id="tablaCodigos"></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/admin.js"></script>
+</body>
+</html>
