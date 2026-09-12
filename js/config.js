@@ -11,6 +11,6 @@
 // ============================================================
 
 const SUPABASE_URL  = 'https://eqsakdlolyathgdbcegz.supabase.co';
-const SUPABASE_KEY  = 'PEGA_AQUI_TU_CLAVE_PUBLICA';
+const SUPABASE_KEY  = 'sb_publishable_I-aW4AC9v8XKDsusWVwLUA_If7V41ld';
 
 const ADMIN_EMAIL   = 'admin@lapaya.com';

@@ -90,3 +90,18 @@ label{font-size:.82rem; color:var(--suave); display:block; margin-bottom:3px}
   .panel{padding:11px}
   header h1{font-size:1rem}
 }
+
+/* ===== botón rotativo de apuntes ===== */
+button.mod{
+  min-width:150px; text-align:center; font-weight:600; border:1px solid transparent;
+  transition:background .12s, color .12s;
+}
+button.mod.m-no      {background:#efeae2; color:var(--suave); border-color:var(--linea); font-weight:400}
+button.mod.m-completo{background:#d9f0e2; color:var(--verde-osc)}
+button.mod.m-sob     {background:var(--verde); color:#fff}
+button.mod.m-solosob {background:#fdf0d5; color:#8a5a00}
+button.mod:hover     {filter:brightness(.96)}
+
+@media (max-width:560px){
+  button.mod{min-width:120px; padding:9px 8px}
+}

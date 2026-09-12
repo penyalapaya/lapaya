@@ -211,21 +211,35 @@ function pintarApuntes(){
     const activo = servicio === 'comida' ? d.hay_comida : d.hay_cena;
     if (!activo) continue;
 
-    html += `<div class="panel"><h2>${servicio === 'comida' ? 'Comida' : 'Cena'}</h2>
-      <div class="tabla-wrap"><table><thead><tr><th>Persona</th><th>Apuntado</th><th class="num">Precio</th></tr></thead><tbody>`;
+    const lista  = apuntesDe(d.id, servicio);
+    const conSob = lista.filter(a => a.modalidad !== 'completo').length;
+
+    html += `<div class="panel">
+      <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+        <h2 style="margin:0">${servicio === 'comida' ? 'Comida' : 'Cena'}</h2>
+        <span style="color:var(--suave);font-size:.85rem">${lista.length} apuntados · ${conSob} se quedan a la sobremesa</span>
+      </div>
+
+      <div class="fila" style="margin:12px 0 4px">
+        <div style="flex:0 0 auto"><button class="mini" onclick="apuntarTodos(${d.id},'${servicio}','con_sobremesa')">Todos con sobremesa</button></div>
+        <div style="flex:0 0 auto"><button class="mini sec" onclick="apuntarTodos(${d.id},'${servicio}','completo')">Todos ${servicio === 'comida' ? 'solo comer' : 'solo cenar'}</button></div>
+        <div style="flex:0 0 auto"><button class="mini sec" onclick="vaciarServicio(${d.id},'${servicio}')">Vaciar</button></div>
+      </div>
+
+      <div class="tabla-wrap"><table><thead><tr>
+        <th>Persona</th><th>Apuntado</th><th class="num">Precio</th></tr></thead><tbody>`;
+
     for (const p of activos()){
       const a = DB.apuntes.find(x => x.persona_id === p.id && x.dia_id === d.id && x.servicio === servicio);
+      const m = a ? a.modalidad : '';
       html += `<tr>
         <td>${esc(p.nombre)} ${p.tipo === 'invitado' ? '<span class="pill inv">inv.</span>' : ''}</td>
-        <td><select onchange="ponerApunte(${p.id}, ${d.id}, '${servicio}', this.value)">
-            <option value="">— no viene —</option>
-            ${Object.entries(MODALIDADES).map(([k, v]) =>
-              `<option value="${k}" ${a && a.modalidad === k ? 'selected' : ''}>${v}</option>`).join('')}
-          </select></td>
+        <td><button class="mod ${claseModalidad(m)}"
+              onclick="rotarApunte(${p.id}, ${d.id}, '${servicio}')">${esc(etiquetaModalidad(servicio, m))}</button></td>
         <td class="num">${a ? eur(precioApunte(a)) : '—'}</td>
       </tr>`;
     }
-    const lista = apuntesDe(d.id, servicio);
+
     html += `</tbody><tfoot><tr class="total"><td>${lista.length} personas</td><td></td>
       <td class="num">${eur(lista.reduce((s, a) => s + precioApunte(a), 0))}</td></tr></tfoot></table></div></div>`;
   }
@@ -233,18 +247,73 @@ function pintarApuntes(){
   $('#matrizApuntes').innerHTML = html;
 }
 
+// Ciclo del botón rotativo: no viene -> solo comer -> con sobremesa -> solo sobremesa -> no viene
+const CICLO = ['', 'completo', 'con_sobremesa', 'solo_sobremesa'];
+
+function etiquetaModalidad(servicio, m){
+  if (!m) return 'No viene';
+  if (m === 'completo')       return servicio === 'comida' ? 'Solo comer' : 'Solo cenar';
+  if (m === 'con_sobremesa')  return 'Con sobremesa';
+  return 'Solo sobremesa';
+}
+function claseModalidad(m){
+  return {'': 'm-no', completo: 'm-completo', con_sobremesa: 'm-sob', solo_sobremesa: 'm-solosob'}[m];
+}
+
+function rotarApunte(persona_id, dia_id, servicio){
+  const a = DB.apuntes.find(x => x.persona_id === persona_id && x.dia_id === dia_id && x.servicio === servicio);
+  const actual = a ? a.modalidad : '';
+  const siguiente = CICLO[(CICLO.indexOf(actual) + 1) % CICLO.length];
+  return ponerApunte(persona_id, dia_id, servicio, siguiente);
+}
+
 async function ponerApunte(persona_id, dia_id, servicio, modalidad){
   if (!modalidad){
     const {error} = await sb.from('apuntes').delete()
       .eq('persona_id', persona_id).eq('dia_id', dia_id).eq('servicio', servicio);
     if (error) return aviso('#avisoApuntes', error.message, 'err');
+    DB.apuntes = DB.apuntes.filter(x =>
+      !(x.persona_id === persona_id && x.dia_id === dia_id && x.servicio === servicio));
   } else {
-    const {error} = await sb.from('apuntes')
-      .upsert({persona_id, dia_id, servicio, modalidad}, {onConflict: 'persona_id,dia_id,servicio'});
+    const {data, error} = await sb.from('apuntes')
+      .upsert({persona_id, dia_id, servicio, modalidad}, {onConflict: 'persona_id,dia_id,servicio'})
+      .select();
     if (error) return aviso('#avisoApuntes', error.message, 'err');
+    const i = DB.apuntes.findIndex(x =>
+      x.persona_id === persona_id && x.dia_id === dia_id && x.servicio === servicio);
+    if (i >= 0) DB.apuntes[i] = data[0]; else DB.apuntes.push(data[0]);
   }
+  pintarApuntes();
+}
+
+// Apunta de golpe a todas las personas activas que aún no estén en esa modalidad
+async function apuntarTodos(dia_id, servicio, modalidad){
+  const filas = activos()
+    .filter(p => {
+      const a = DB.apuntes.find(x => x.persona_id === p.id && x.dia_id === dia_id && x.servicio === servicio);
+      return !a || a.modalidad !== modalidad;
+    })
+    .map(p => ({persona_id: p.id, dia_id, servicio, modalidad}));
+
+  if (!filas.length) return aviso('#avisoApuntes', 'Ya estaban todos así.', 'ok');
+
+  const {error} = await sb.from('apuntes')
+    .upsert(filas, {onConflict: 'persona_id,dia_id,servicio'});
+  if (error) return aviso('#avisoApuntes', error.message, 'err');
+
   const r = await sb.from('apuntes').select('*');
   if (!r.error) DB.apuntes = r.data;
+  pintarApuntes();
+}
+
+async function vaciarServicio(dia_id, servicio){
+  const cuantos = apuntesDe(dia_id, servicio).length;
+  if (!cuantos) return;
+  if (!confirm(`¿Quitar a las ${cuantos} personas apuntadas?`)) return;
+
+  const {error} = await sb.from('apuntes').delete().eq('dia_id', dia_id).eq('servicio', servicio);
+  if (error) return aviso('#avisoApuntes', error.message, 'err');
+  DB.apuntes = DB.apuntes.filter(x => !(x.dia_id === dia_id && x.servicio === servicio));
   pintarApuntes();
 }
 
