@@ -97,7 +97,7 @@ function tarjetaRecuento(titulo, lista, menu){
   return `<div class="panel">
     <h3 style="margin-top:0">${titulo}</h3>
     <div class="dato">${lista.length}<small>personas en total</small></div>
-    <div style="margin-top:6px;font-size:.85rem;color:var(--suave)">${conSob} se quedan a la sobremesa</div>
+    <div style="margin-top:6px;font-size:.85rem;color:var(--tinta-70)">${conSob} se quedan a la sobremesa</div>
     ${menu ? `<div style="margin-top:10px"><b>Menú:</b> ${esc(menu)}</div>` : ''}
   </div>`;
 }
@@ -125,18 +125,51 @@ function listaApuntados(titulo, lista, d, servicio){
 // ---------------- pestaña CALENDARIO ----------------
 function pintarCalendario(){
   if (!DB.dias.length){ $('#calendario').innerHTML = '<p class="vacio">Sin días programados.</p>'; return; }
-  let html = '<div class="panel"><h2>Todos los días</h2><div class="tabla-wrap"><table><thead><tr>' +
-    '<th>Día</th><th>Comida</th><th class="num">Comen</th><th>Cena</th><th class="num">Cenan</th></tr></thead><tbody>';
+
+  let html = `<div class="panel"><h2>Todos los días</h2><div class="tabla-wrap"><table>
+    <thead>
+      <tr>
+        <th rowspan="2">Día</th>
+        <th colspan="3">Comida</th>
+        <th colspan="3">Cena</th>
+      </tr>
+      <tr>
+        <th>Menú</th><th class="num">Comen</th><th class="num">Sobremesa</th>
+        <th>Menú</th><th class="num">Cenan</th><th class="num">Sobremesa</th>
+      </tr>
+    </thead><tbody>`;
+
+  let tComen = 0, tSobComida = 0, tCenan = 0, tSobCena = 0;
+
   for (const d of DB.dias){
-    html += `<tr>
-      <td><b>${esc(fechaCorta(d.fecha))}</b></td>
-      <td>${d.hay_comida ? esc(d.menu_comida || '—') : '<i style="color:var(--suave)">no hay</i>'}</td>
-      <td class="num">${d.hay_comida ? apuntesDe(d.id,'comida').length : ''}</td>
-      <td>${d.hay_cena ? esc(d.menu_cena || '—') : '<i style="color:var(--suave)">no hay</i>'}</td>
-      <td class="num">${d.hay_cena ? apuntesDe(d.id,'cena').length : ''}</td>
-    </tr>`;
+    html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
+    for (const servicio of ['comida','cena']){
+      const hay = servicio === 'comida' ? d.hay_comida : d.hay_cena;
+      if (!hay){
+        html += '<td colspan="3" style="color:var(--tinta-40)">no hay</td>';
+        continue;
+      }
+      const lista = apuntesDe(d.id, servicio);
+      // "solo sobremesa" también se queda a la sobremesa, aunque no coma
+      const sob   = lista.filter(a => a.modalidad !== 'completo').length;
+      const menu  = servicio === 'comida' ? d.menu_comida : d.menu_cena;
+
+      if (servicio === 'comida'){ tComen += lista.length; tSobComida += sob; }
+      else                      { tCenan += lista.length; tSobCena   += sob; }
+
+      html += `<td>${esc(menu || '—')}</td>
+        <td class="num">${lista.length}</td>
+        <td class="num">${sob || '<span style="color:var(--tinta-40)">0</span>'}</td>`;
+    }
+    html += '</tr>';
   }
-  html += '</tbody></table></div></div>';
+
+  html += `</tbody><tfoot><tr class="total">
+      <td>TOTAL</td>
+      <td></td><td class="num">${tComen}</td><td class="num">${tSobComida}</td>
+      <td></td><td class="num">${tCenan}</td><td class="num">${tSobCena}</td>
+    </tr></tfoot></table></div></div>`;
+
   $('#calendario').innerHTML = html;
 }
 
@@ -151,11 +184,11 @@ function pintarTurnos(){
     const fecha = DB.config['fecha_' + tipo];
     html += `<div class="panel">
       <h3 style="margin-top:0">${esc(TIPOS_TAREA[tipo])}</h3>
-      ${fecha ? `<div style="font-weight:600;text-transform:capitalize;margin-bottom:8px">${esc(fechaLarga(fecha))}</div>`
-              : '<div style="color:var(--suave);margin-bottom:8px">Fecha por concretar</div>'}
+      ${fecha ? `<div style="font-weight:600;margin-bottom:8px">${esc(fechaLarga(fecha))}</div>`
+              : '<div style="color:var(--tinta-70);margin-bottom:8px">Fecha por concretar</div>'}
       ${gente.length
         ? `<div>${gente.map(p => esc(p.nombre)).join(' · ')}</div>
-           <div style="margin-top:8px;font-size:.82rem;color:var(--suave)">${gente.length} personas</div>`
+           <div style="margin-top:8px;font-size:.82rem;color:var(--tinta-70)">${gente.length} personas</div>`
         : '<p class="vacio">Nadie asignado todavía.</p>'}
     </div>`;
   }
@@ -171,7 +204,7 @@ function pintarTurnos(){
       const gente = personasTurno(d.id, t);
       html += `<td>${gente.length
         ? gente.map(p => esc(p.nombre)).join('<br>')
-        : '<span style="color:var(--linea)">·</span>'}</td>`;
+        : '<span style="color:var(--linea-fuerte)">·</span>'}</td>`;
     }
     html += '</tr>';
   }
@@ -243,11 +276,11 @@ function pintarMias(){
       <div><div class="dato ${c.debe > 0.005 ? 'debe' : 'saldado'}">${eur(c.debe)}<small>te falta por pagar</small></div></div>
     </div>`;
   if (p.tipo === 'socio'){
-    html += `<p style="font-size:.85rem;color:var(--suave)">
+    html += `<p style="font-size:.85rem;color:var(--tinta-70)">
       Incluye ${eur(c.cuotaGenerales)} de gastos generales (de los que llevas pagados ${eur(c.generalesPagados)}).</p>`;
   } else {
     const s = persona(p.socio_id);
-    html += `<p style="font-size:.85rem;color:var(--suave)">Eres invitado${s ? ' de ' + esc(s.nombre) : ''}: no pagas gastos generales.</p>`;
+    html += `<p style="font-size:.85rem;color:var(--tinta-70)">Eres invitado${s ? ' de ' + esc(s.nombre) : ''}: no pagas gastos generales.</p>`;
   }
   html += '</div>';
 
@@ -278,9 +311,9 @@ function pintarMias(){
 
   for (const t of misTareas){
     const fecha = DB.config['fecha_' + t.tipo];
-    html += `<div style="padding:9px 11px;background:#f6f2ea;border-radius:7px;margin-bottom:8px">
+    html += `<div style="padding:9px 11px;background:var(--verde-50);border-radius:7px;margin-bottom:8px">
       <b>${esc(TIPOS_TAREA[t.tipo])}</b>
-      <span style="color:var(--suave)"> · ${fecha ? esc(fechaLarga(fecha)) : 'fecha por concretar'}</span>
+      <span style="color:var(--tinta-70)"> · ${fecha ? esc(fechaLarga(fecha)) : 'fecha por concretar'}</span>
     </div>`;
   }
 
@@ -289,7 +322,7 @@ function pintarMias(){
     for (const t of mt){
       html += `<tr><td><b>${esc(fechaCorta(dia(t.dia_id).fecha))}</b></td>
         <td>${esc(TIPOS_TURNO[t.tipo])}</td>
-        <td style="color:var(--suave)">${esc(t.notas || '')}</td></tr>`;
+        <td style="color:var(--tinta-70)">${esc(t.notas || '')}</td></tr>`;
     }
     html += '</tbody></table></div>';
   } else if (!misTareas.length){
@@ -359,7 +392,7 @@ function pintarCobros(){
       for (const g of [...DB.pagos].reverse()){
         const p = persona(g.persona_id);
         html += `<tr><td>${p ? esc(p.nombre) : '?'}</td><td class="num">${eur(g.importe)}</td>
-          <td style="color:var(--suave)">${esc(g.fecha)}</td>
+          <td style="color:var(--tinta-70)">${esc(g.fecha)}</td>
           <td><button class="mini peligro" onclick="borrarPago(${g.id})">Borrar</button></td></tr>`;
       }
       html += '</tbody></table></div></div>';
@@ -374,7 +407,7 @@ function pintarCobros(){
 
       const equipo = personasTurno(t.dia_id, t.tipo);
       html += `<div class="panel"><h2>${esc(fechaLarga(d.fecha))} · ${servicio}</h2>
-        <p style="margin-top:0;color:var(--suave);font-size:.85rem">
+        <p style="margin-top:0;color:var(--tinta-70);font-size:.85rem">
           A cargo de ${esc(equipo.map(p => p.nombre).join(' · '))}</p>`;
       if (!lista.length) html += '<p class="vacio">Nadie apuntado.</p>';
       else {

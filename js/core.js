@@ -32,7 +32,8 @@ const eur = n => (Number(n) || 0).toLocaleString('es-ES', {style:'currency', cur
 
 function fechaLarga(iso){
   const d = new Date(iso + 'T12:00:00');
-  return d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+  const t = d.toLocaleDateString('es-ES', {weekday:'long', day:'numeric', month:'long'});
+  return t.charAt(0).toUpperCase() + t.slice(1);
 }
 function fechaCorta(iso){
   const d = new Date(iso + 'T12:00:00');

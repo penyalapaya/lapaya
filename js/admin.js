@@ -153,7 +153,7 @@ function pintarDias(){
   for (const d of DB.dias){
     html += `<div class="panel">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-        <h2 style="margin:0;text-transform:capitalize">${esc(fechaLarga(d.fecha))}</h2>
+        <h2 style="margin:0">${esc(fechaLarga(d.fecha))}</h2>
         <button class="mini peligro" style="margin-left:auto" onclick="borrarDia(${d.id})">Borrar día</button>
       </div>
 
@@ -217,7 +217,7 @@ function pintarApuntes(){
     html += `<div class="panel">
       <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
         <h2 style="margin:0">${servicio === 'comida' ? 'Comida' : 'Cena'}</h2>
-        <span style="color:var(--suave);font-size:.85rem">${lista.length} apuntados · ${conSob} se quedan a la sobremesa</span>
+        <span style="color:var(--tinta-70);font-size:.85rem">${lista.length} apuntados · ${conSob} se quedan a la sobremesa</span>
       </div>
 
       <div class="fila" style="margin:12px 0 4px">
@@ -363,7 +363,7 @@ function celdaTurno(d, tipo){
 // Montaje y recogida: grupos de personas, sin día
 function pintarTareasAdmin(){
   let html = `<div class="panel"><h2>Montaje y recogida</h2>
-    <p style="font-size:.82rem;color:var(--suave);margin-top:0">
+    <p style="font-size:.82rem;color:var(--tinta-70);margin-top:0">
       No van por días: marca quién se encarga antes y después de las fiestas.</p>`;
 
   if (!activos().length) return html + '<p class="vacio">Añade personas primero.</p></div>';
@@ -377,11 +377,11 @@ function pintarTareasAdmin(){
       <label for="f-${tipo}">Fecha orientativa</label>
       <input type="date" id="f-${tipo}" value="${esc(DB.config[clave] || '')}"
              onchange="guardarClave('${clave}', this.value)">
-      <div style="margin:10px 0 6px;font-size:.82rem;color:var(--suave)">${asignadas.length} personas</div>
+      <div style="margin:10px 0 6px;font-size:.82rem;color:var(--tinta-70)">${asignadas.length} personas</div>
       <div style="max-height:260px;overflow:auto;border:1px solid var(--linea);border-radius:7px;padding:8px">`;
     for (const p of activos()){
       const marcada = DB.tareas.some(t => t.tipo === tipo && t.persona_id === p.id);
-      html += `<label style="display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--texto);margin-bottom:3px">
+      html += `<label style="display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--tinta);margin-bottom:3px">
           <input type="checkbox" ${marcada ? 'checked' : ''}
                  onchange="ponerTarea('${tipo}', ${p.id}, this.checked)">
           ${esc(p.nombre)}${p.tipo === 'invitado' ? ' <span class="pill inv">inv.</span>' : ''}

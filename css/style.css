@@ -1,124 +1,480 @@
-/* ===== La Paya - estilos ===== */
+/* ============================================================
+   Peña La Paya — hoja de estilos
+   ============================================================ */
+
 :root{
-  --verde:#1b7a4b; --verde-osc:#125c38; --rojo:#c0392b; --ambar:#e08b18;
-  --texto:#22201d; --suave:#6f6a63; --linea:#e3ded6;
-  --fondo:#faf7f2; --panel:#fff;
+  /* marca */
+  --verde-900:#0d4429;
+  --verde-700:#14663d;
+  --verde-500:#1d8d55;
+  --verde-100:#dcf0e4;
+  --verde-50:#f0f9f3;
+
+  --ambar:#c47f10;
+  --ambar-100:#fdf1d8;
+  --rojo:#b4392a;
+  --rojo-100:#fbe3df;
+
+  /* neutros */
+  --tinta:#1f2421;
+  --tinta-70:#5c645f;
+  --tinta-40:#949c96;
+  --linea:#e4e6e3;
+  --linea-fuerte:#d2d6d2;
+  --papel:#ffffff;
+  --fondo:#f4f6f3;
+
+  --r-s:8px;
+  --r-m:12px;
+  --r-l:18px;
+  --sombra:0 1px 2px rgba(16,24,20,.05), 0 4px 14px rgba(16,24,20,.05);
+  --sombra-alta:0 2px 6px rgba(16,24,20,.07), 0 12px 32px rgba(16,24,20,.09);
 }
+
 *{box-sizing:border-box}
+
 body{
-  margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  background:var(--fondo); color:var(--texto); font-size:15px; line-height:1.5;
+  margin:0;
+  font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  font-size:15px;
+  line-height:1.55;
+  color:var(--tinta);
+  background:var(--fondo);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
 }
+
+/* ============================================================
+   Cabecera
+   ============================================================ */
 header{
-  background:var(--verde); color:#fff; padding:14px 16px;
-  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:linear-gradient(135deg,var(--verde-900) 0%,var(--verde-700) 62%,var(--verde-500) 140%);
+  color:#fff;
+  padding:20px 22px 22px;
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex-wrap:wrap;
 }
-header h1{margin:0; font-size:1.15rem; letter-spacing:.3px}
-header .sub{font-size:.8rem; opacity:.85}
-header .der{margin-left:auto; display:flex; gap:8px; align-items:center}
-header a{color:#fff; font-size:.85rem}
+header h1{
+  margin:0;
+  font-size:1.4rem;
+  font-weight:700;
+  letter-spacing:-.015em;
+}
+header .sub{
+  font-size:.82rem;
+  color:rgba(255,255,255,.72);
+  margin-top:2px;
+}
+header .der{
+  margin-left:auto;
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+header a{
+  color:#fff;
+  font-size:.84rem;
+  font-weight:500;
+  text-decoration:none;
+  padding:7px 14px;
+  border-radius:99px;
+  background:rgba(255,255,255,.13);
+  border:1px solid rgba(255,255,255,.16);
+  transition:background .15s;
+}
+header a:hover{background:rgba(255,255,255,.24)}
 
-/* pestañas */
+/* ============================================================
+   Pestañas — píldoras sobre una barra, sin bordes inferiores
+   ============================================================ */
 nav.tabs{
-  display:flex; gap:2px; overflow-x:auto; background:var(--verde-osc);
-  padding:0 8px; -webkit-overflow-scrolling:touch;
+  position:sticky;
+  top:0;
+  z-index:20;
+  display:flex;
+  gap:4px;
+  overflow-x:auto;
+  scrollbar-width:none;
+  padding:9px 14px;
+  background:rgba(255,255,255,.9);
+  backdrop-filter:saturate(1.6) blur(10px);
+  border-bottom:1px solid var(--linea);
 }
+nav.tabs::-webkit-scrollbar{display:none}
 nav.tabs button{
-  background:transparent; border:0; color:#cfe8da; padding:11px 14px;
-  font-size:.88rem; cursor:pointer; white-space:nowrap; border-bottom:3px solid transparent;
+  flex:0 0 auto;
+  background:transparent;
+  border:0;
+  border-radius:99px;
+  color:var(--tinta-70);
+  padding:8px 16px;
+  font-family:inherit;
+  font-size:.88rem;
+  font-weight:500;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:background .15s,color .15s;
 }
-nav.tabs button.on{color:#fff; border-bottom-color:#ffd36b; font-weight:600}
+nav.tabs button:hover{background:var(--verde-50); color:var(--verde-700)}
+nav.tabs button.on{
+  background:var(--verde-700);
+  color:#fff;
+  font-weight:600;
+  box-shadow:0 1px 3px rgba(13,68,41,.3);
+}
 
-main{padding:16px; max-width:1100px; margin:0 auto}
+/* ============================================================
+   Estructura
+   ============================================================ */
+main{
+  padding:22px 18px 64px;
+  max-width:1120px;
+  margin:0 auto;
+}
 section.tab{display:none}
-section.tab.on{display:block}
+section.tab.on{display:block; animation:entra .22s ease}
+@keyframes entra{from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:none}}
 
-h2{font-size:1.05rem; margin:0 0 12px}
-h3{font-size:.95rem; margin:18px 0 8px; color:var(--suave)}
-
-.panel{background:var(--panel); border:1px solid var(--linea); border-radius:10px; padding:14px; margin-bottom:14px}
-
-/* tablas */
-.tabla-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch}
-table{border-collapse:collapse; width:100%; font-size:.88rem; background:var(--panel)}
-th,td{border-bottom:1px solid var(--linea); padding:7px 9px; text-align:left; vertical-align:middle}
-th{background:#f1ece4; font-weight:600; white-space:nowrap; position:sticky; top:0}
-td.num,th.num{text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums}
-tr.total td{font-weight:700; background:#f6f2ea}
-
-/* botones y campos */
-button,.btn{
-  background:var(--verde); color:#fff; border:0; border-radius:7px;
-  padding:8px 13px; font-size:.87rem; cursor:pointer; font-family:inherit;
+h2{
+  font-size:1.02rem;
+  font-weight:650;
+  letter-spacing:-.01em;
+  margin:0 0 14px;
 }
-button:hover{filter:brightness(1.08)}
-button.sec{background:#e8e2d8; color:var(--texto)}
-button.peligro{background:var(--rojo)}
-button.mini{padding:4px 8px; font-size:.78rem}
+h3{
+  font-size:.78rem;
+  font-weight:650;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:var(--tinta-40);
+  margin:22px 0 10px;
+}
+
+.panel{
+  background:var(--papel);
+  border:1px solid var(--linea);
+  border-radius:var(--r-l);
+  box-shadow:var(--sombra);
+  padding:20px;
+  margin-bottom:16px;
+}
+
+/* ============================================================
+   Tablas
+   ============================================================ */
+.tabla-wrap{
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  border:1px solid var(--linea);
+  border-radius:var(--r-m);
+}
+table{
+  border-collapse:collapse;
+  width:100%;
+  font-size:.875rem;
+  background:var(--papel);
+}
+th,td{
+  padding:10px 13px;
+  text-align:left;
+  vertical-align:middle;
+  border-bottom:1px solid var(--linea);
+}
+thead th{
+  background:var(--verde-50);
+  color:var(--verde-900);
+  font-weight:650;
+  font-size:.76rem;
+  letter-spacing:.05em;
+  text-transform:uppercase;
+  white-space:nowrap;
+  border-bottom:1px solid var(--linea-fuerte);
+}
+tbody tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s}
+tbody tr:hover{background:var(--verde-50)}
+td.num,th.num{
+  text-align:right;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+tfoot td{
+  border-top:1px solid var(--linea-fuerte);
+  border-bottom:0;
+}
+tr.total td{
+  font-weight:700;
+  background:#fafbfa;
+}
+
+/* ============================================================
+   Botones
+   ============================================================ */
+button,.btn{
+  background:var(--verde-700);
+  color:#fff;
+  border:0;
+  border-radius:var(--r-s);
+  padding:9px 16px;
+  font-family:inherit;
+  font-size:.87rem;
+  font-weight:550;
+  cursor:pointer;
+  transition:background .15s,transform .06s,box-shadow .15s;
+}
+button:hover{background:var(--verde-500)}
+button:active{transform:translateY(1px)}
+button:disabled{opacity:.38; cursor:not-allowed; transform:none}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible{
+  outline:2px solid var(--verde-500);
+  outline-offset:2px;
+}
+button.sec{
+  background:var(--papel);
+  color:var(--tinta);
+  border:1px solid var(--linea-fuerte);
+}
+button.sec:hover{background:var(--fondo); border-color:var(--tinta-40)}
+button.peligro{background:var(--rojo-100); color:var(--rojo)}
+button.peligro:hover{background:var(--rojo); color:#fff}
+button.mini{padding:5px 11px; font-size:.79rem; border-radius:6px}
+
+/* ============================================================
+   Campos
+   ============================================================ */
 input,select,textarea{
-  font-family:inherit; font-size:.87rem; padding:7px 8px;
-  border:1px solid var(--linea); border-radius:6px; background:#fff; color:var(--texto);
+  font-family:inherit;
+  font-size:.88rem;
+  color:var(--tinta);
+  background:var(--papel);
+  border:1px solid var(--linea-fuerte);
+  border-radius:var(--r-s);
+  padding:8px 10px;
   max-width:100%;
+  transition:border-color .15s,box-shadow .15s;
+}
+input:focus,select:focus,textarea:focus{
+  outline:0;
+  border-color:var(--verde-500);
+  box-shadow:0 0 0 3px var(--verde-100);
 }
 input[type=number]{text-align:right}
-label{font-size:.82rem; color:var(--suave); display:block; margin-bottom:3px}
-.fila{display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; margin-bottom:10px}
-.fila > div{flex:1 1 150px}
+input[type=checkbox]{
+  width:17px; height:17px;
+  accent-color:var(--verde-700);
+  cursor:pointer;
+}
+label{
+  display:block;
+  font-size:.78rem;
+  font-weight:550;
+  color:var(--tinta-70);
+  margin-bottom:5px;
+}
+.fila{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  margin-bottom:12px;
+}
+.fila > div{flex:1 1 160px}
+.fila > div > input,
+.fila > div > select{width:100%}
 
-/* avisos y etiquetas */
-.pill{display:inline-block; padding:2px 8px; border-radius:99px; font-size:.75rem; font-weight:600}
-.pill.ok{background:#d9f0e2; color:var(--verde-osc)}
-.pill.no{background:#fadcd8; color:var(--rojo)}
-.pill.inv{background:#fdf0d5; color:#8a5a00}
-.aviso{padding:10px 12px; border-radius:8px; margin-bottom:12px; font-size:.87rem}
-.aviso.err{background:#fadcd8; color:#8c1f14}
-.aviso.ok{background:#d9f0e2; color:var(--verde-osc)}
-.vacio{color:var(--suave); font-style:italic; padding:10px 0}
-.debe{color:var(--rojo); font-weight:700}
-.saldado{color:var(--verde); font-weight:700}
+/* ============================================================
+   Etiquetas y avisos
+   ============================================================ */
+.pill{
+  display:inline-block;
+  padding:2px 9px;
+  border-radius:99px;
+  font-size:.72rem;
+  font-weight:650;
+  letter-spacing:.02em;
+  white-space:nowrap;
+}
+.pill.ok {background:var(--verde-100); color:var(--verde-900)}
+.pill.no {background:var(--rojo-100);  color:var(--rojo)}
+.pill.inv{background:var(--ambar-100); color:var(--ambar)}
 
-/* navegador de dias */
-.navdia{display:flex; align-items:center; gap:10px; justify-content:center; margin-bottom:14px}
-.navdia .fecha{font-size:1.05rem; font-weight:700; min-width:210px; text-align:center; text-transform:capitalize}
+.aviso{
+  padding:11px 15px;
+  border-radius:var(--r-m);
+  margin-bottom:14px;
+  font-size:.87rem;
+  font-weight:500;
+  border:1px solid transparent;
+}
+.aviso.ok {background:var(--verde-100); color:var(--verde-900); border-color:#bfe3cd}
+.aviso.err{background:var(--rojo-100);  color:var(--rojo);      border-color:#f2c9c2}
 
-.tarjetas{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:12px}
-.dato{font-size:1.5rem; font-weight:700}
-.dato small{display:block; font-size:.78rem; font-weight:400; color:var(--suave)}
+.vacio{
+  color:var(--tinta-40);
+  font-size:.87rem;
+  padding:16px 0;
+  margin:0;
+}
+.debe   {color:var(--rojo);       font-weight:700}
+.saldado{color:var(--verde-500);  font-weight:700}
 
-@media (max-width:560px){
-  main{padding:10px}
-  .panel{padding:11px}
-  header h1{font-size:1rem}
+/* ============================================================
+   Navegador de días
+   ============================================================ */
+.navdia{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  justify-content:center;
+  margin-bottom:18px;
+  background:var(--papel);
+  border:1px solid var(--linea);
+  border-radius:99px;
+  padding:7px;
+  box-shadow:var(--sombra);
+}
+.navdia button{
+  background:transparent;
+  color:var(--tinta-70);
+  border-radius:99px;
+  padding:7px 15px;
+}
+.navdia button:hover:not(:disabled){background:var(--verde-50); color:var(--verde-700)}
+.navdia .fecha{
+  flex:1;
+  font-size:1.06rem;
+  font-weight:650;
+  letter-spacing:-.01em;
+  text-align:center;
+  min-width:180px;
 }
 
-/* ===== botón rotativo de apuntes ===== */
+/* ============================================================
+   Tarjetas de dato
+   ============================================================ */
+.tarjetas{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(235px,1fr));
+  gap:16px;
+  margin-bottom:16px;
+}
+.tarjetas .panel{margin-bottom:0}
+.dato{
+  font-size:1.9rem;
+  font-weight:700;
+  line-height:1.15;
+  letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums;
+}
+.dato small{
+  display:block;
+  margin-top:3px;
+  font-size:.78rem;
+  font-weight:500;
+  letter-spacing:0;
+  color:var(--tinta-40);
+}
+
+/* ============================================================
+   Botón rotativo para apuntar comidas
+   ============================================================ */
 button.mod{
-  min-width:150px; text-align:center; font-weight:600; border:1px solid transparent;
-  transition:background .12s, color .12s;
+  min-width:158px;
+  text-align:center;
+  font-weight:600;
+  border:1px solid transparent;
+  box-shadow:none;
 }
-button.mod.m-no      {background:#efeae2; color:var(--suave); border-color:var(--linea); font-weight:400}
-button.mod.m-completo{background:#d9f0e2; color:var(--verde-osc)}
-button.mod.m-sob     {background:var(--verde); color:#fff}
-button.mod.m-solosob {background:#fdf0d5; color:#8a5a00}
-button.mod:hover     {filter:brightness(.96)}
-
-@media (max-width:560px){
-  button.mod{min-width:120px; padding:9px 8px}
+button.mod.m-no{
+  background:var(--fondo);
+  color:var(--tinta-40);
+  border-color:var(--linea-fuerte);
+  font-weight:500;
 }
+button.mod.m-no:hover      {background:var(--linea); color:var(--tinta-70)}
+button.mod.m-completo      {background:var(--verde-100); color:var(--verde-900)}
+button.mod.m-completo:hover{background:#c9e8d6}
+button.mod.m-sob           {background:var(--verde-700); color:#fff}
+button.mod.m-sob:hover     {background:var(--verde-500)}
+button.mod.m-solosob       {background:var(--ambar-100); color:var(--ambar)}
+button.mod.m-solosob:hover {background:#f9e5bd}
 
-/* ===== personas asignadas a un turno ===== */
+/* ============================================================
+   Personas asignadas a un turno
+   ============================================================ */
 .chip{
-  display:inline-flex; align-items:center; gap:5px;
-  background:#d9f0e2; color:var(--verde-osc);
-  border-radius:99px; padding:2px 4px 2px 10px;
-  font-size:.82rem; font-weight:600; margin:0 4px 4px 0;
+  display:inline-flex;
+  align-items:center;
+  gap:2px;
+  background:var(--verde-100);
+  color:var(--verde-900);
+  border-radius:99px;
+  padding:3px 4px 3px 11px;
+  font-size:.8rem;
+  font-weight:600;
+  margin:0 4px 4px 0;
 }
 .chip button{
-  background:none; border:0; color:var(--verde-osc); opacity:.55;
-  font-size:1rem; line-height:1; padding:0 4px; cursor:pointer; border-radius:99px;
+  background:none;
+  border:0;
+  color:var(--verde-900);
+  opacity:.5;
+  font-size:1.05rem;
+  line-height:1;
+  padding:1px 5px;
+  border-radius:99px;
+  transition:opacity .15s,background .15s;
 }
-.chip button:hover{opacity:1; background:rgba(0,0,0,.08)}
+.chip button:hover{opacity:1; background:rgba(13,68,41,.12)}
 select.anadir{
-  font-size:.78rem; padding:3px 5px; color:var(--suave);
-  border-style:dashed; background:transparent;
+  font-size:.79rem;
+  padding:4px 7px;
+  color:var(--tinta-40);
+  border-style:dashed;
+  background:transparent;
 }
+select.anadir:hover{border-color:var(--verde-500); color:var(--verde-700)}
+
+/* ============================================================
+   Pantalla de acceso
+   ============================================================ */
+#login main{max-width:380px; padding-top:8vh}
+#login .panel{box-shadow:var(--sombra-alta); padding:28px}
+#login input#pin{
+  width:100%;
+  font-size:1.7rem;
+  text-align:center;
+  letter-spacing:.5em;
+  text-indent:.5em;
+  padding:13px 10px;
+}
+#login button{width:100%; padding:12px}
+
+/* ============================================================
+   Pantallas estrechas
+   ============================================================ */
+@media (max-width:600px){
+  body{font-size:14.5px}
+  header{padding:16px 16px 18px}
+  header h1{font-size:1.18rem}
+  nav.tabs{padding:8px 10px}
+  nav.tabs button{padding:7px 13px; font-size:.85rem}
+  main{padding:16px 12px 48px}
+  .panel{padding:15px; border-radius:var(--r-m)}
+  th,td{padding:9px 10px}
+  .dato{font-size:1.6rem}
+  .navdia .fecha{font-size:.95rem; min-width:0}
+  button.mod{min-width:128px; padding:10px 8px}
+}
+
+/* Cabecera de tabla a dos alturas (calendario) */
+thead tr:first-child th[colspan]{
+  text-align:center;
+  border-left:1px solid var(--linea-fuerte);
+  border-bottom:1px solid var(--linea);
+}
+thead tr:first-child th[rowspan]{vertical-align:bottom}
