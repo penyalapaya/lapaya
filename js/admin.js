@@ -321,9 +321,15 @@ async function vaciarServicio(dia_id, servicio){
 // TURNOS
 // ============================================================
 function pintarTurnosAdmin(){
-  if (!DB.dias.length){ $('#adminTurnos').innerHTML = '<p class="vacio">Sin días.</p>'; return; }
+  let html = pintarTareasAdmin();
+
+  if (!DB.dias.length){
+    $('#adminTurnos').innerHTML = html + '<p class="vacio">Sin días.</p>';
+    return;
+  }
+
   const tipos = Object.keys(TIPOS_TURNO);
-  let html = '<div class="panel"><h2>Asignar turnos</h2><div class="tabla-wrap"><table><thead><tr><th>Día</th>' +
+  html += '<div class="panel"><h2>Turnos de cada día</h2><div class="tabla-wrap"><table><thead><tr><th>Día</th>' +
     tipos.map(t => `<th>${esc(TIPOS_TURNO[t])}</th>`).join('') + '</tr></thead><tbody>';
 
   for (const d of DB.dias){
@@ -339,6 +345,57 @@ function pintarTurnosAdmin(){
   }
   html += '</tbody></table></div></div>';
   $('#adminTurnos').innerHTML = html;
+}
+
+// Montaje y recogida: grupos de personas, sin día
+function pintarTareasAdmin(){
+  let html = `<div class="panel"><h2>Montaje y recogida</h2>
+    <p style="font-size:.82rem;color:var(--suave);margin-top:0">
+      No van por días: marca quién se encarga antes y después de las fiestas.</p>`;
+
+  if (!activos().length) return html + '<p class="vacio">Añade personas primero.</p></div>';
+
+  html += '<div class="tarjetas">';
+  for (const tipo of Object.keys(TIPOS_TAREA)){
+    const asignadas = personasTarea(tipo);
+    const clave = 'fecha_' + tipo;
+    html += `<div>
+      <h3 style="margin-top:0">${esc(TIPOS_TAREA[tipo])}</h3>
+      <label for="f-${tipo}">Fecha orientativa</label>
+      <input type="date" id="f-${tipo}" value="${esc(DB.config[clave] || '')}"
+             onchange="guardarClave('${clave}', this.value)">
+      <div style="margin:10px 0 6px;font-size:.82rem;color:var(--suave)">${asignadas.length} personas</div>
+      <div style="max-height:260px;overflow:auto;border:1px solid var(--linea);border-radius:7px;padding:8px">`;
+    for (const p of activos()){
+      const marcada = DB.tareas.some(t => t.tipo === tipo && t.persona_id === p.id);
+      html += `<label style="display:flex;gap:8px;align-items:center;font-size:.88rem;color:var(--texto);margin-bottom:3px">
+          <input type="checkbox" ${marcada ? 'checked' : ''}
+                 onchange="ponerTarea('${tipo}', ${p.id}, this.checked)">
+          ${esc(p.nombre)}${p.tipo === 'invitado' ? ' <span class="pill inv">inv.</span>' : ''}
+        </label>`;
+    }
+    html += '</div></div>';
+  }
+  return html + '</div></div>';
+}
+
+async function ponerTarea(tipo, persona_id, marcada){
+  if (marcada){
+    const {data, error} = await sb.from('tareas').insert({tipo, persona_id}).select();
+    if (error) return aviso('#estado', error.message, 'err');
+    DB.tareas.push(data[0]);
+  } else {
+    const {error} = await sb.from('tareas').delete().eq('tipo', tipo).eq('persona_id', persona_id);
+    if (error) return aviso('#estado', error.message, 'err');
+    DB.tareas = DB.tareas.filter(t => !(t.tipo === tipo && t.persona_id === persona_id));
+  }
+  pintarTurnosAdmin();
+}
+
+async function guardarClave(clave, valor){
+  const {error} = await sb.from('config').upsert([{clave, valor}], {onConflict: 'clave'});
+  if (error) return aviso('#estado', error.message, 'err');
+  DB.config[clave] = valor;
 }
 
 async function ponerTurno(dia_id, tipo, persona_id){

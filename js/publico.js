@@ -142,8 +142,28 @@ function pintarCalendario(){
 
 // ---------------- pestaña TURNOS ----------------
 function pintarTurnos(){
+  let html = '';
+
+  // Montaje y recogida: grupos de personas, sin día
+  html += '<div class="tarjetas">';
+  for (const tipo of Object.keys(TIPOS_TAREA)){
+    const gente = personasTarea(tipo);
+    const fecha = DB.config['fecha_' + tipo];
+    html += `<div class="panel">
+      <h3 style="margin-top:0">${esc(TIPOS_TAREA[tipo])}</h3>
+      ${fecha ? `<div style="font-weight:600;text-transform:capitalize;margin-bottom:8px">${esc(fechaLarga(fecha))}</div>`
+              : '<div style="color:var(--suave);margin-bottom:8px">Fecha por concretar</div>'}
+      ${gente.length
+        ? `<div>${gente.map(p => esc(p.nombre)).join(' · ')}</div>
+           <div style="margin-top:8px;font-size:.82rem;color:var(--suave)">${gente.length} personas</div>`
+        : '<p class="vacio">Nadie asignado todavía.</p>'}
+    </div>`;
+  }
+  html += '</div>';
+
+  // Cuadrante por días
   const tipos = Object.keys(TIPOS_TURNO);
-  let html = '<div class="panel"><h2>Cuadrante de turnos</h2><div class="tabla-wrap"><table><thead><tr><th>Día</th>' +
+  html += '<div class="panel"><h2>Turnos de cada día</h2><div class="tabla-wrap"><table><thead><tr><th>Día</th>' +
     tipos.map(t => `<th>${esc(TIPOS_TURNO[t])}</th>`).join('') + '</tr></thead><tbody>';
   for (const d of DB.dias){
     html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
@@ -248,12 +268,22 @@ function pintarMias(){
   }
   html += '</div>';
 
-  // mis turnos
+  // mis turnos por día y mis tareas de peña
   const mt = DB.turnos.filter(t => t.persona_id === id)
     .sort((a, b) => (dia(a.dia_id)?.fecha || '').localeCompare(dia(b.dia_id)?.fecha || ''));
+  const misTareas = DB.tareas.filter(t => t.persona_id === id);
+
   html += '<div class="panel"><h2>Tus turnos</h2>';
-  if (!mt.length) html += '<p class="vacio">No tienes turnos asignados.</p>';
-  else {
+
+  for (const t of misTareas){
+    const fecha = DB.config['fecha_' + t.tipo];
+    html += `<div style="padding:9px 11px;background:#f6f2ea;border-radius:7px;margin-bottom:8px">
+      <b>${esc(TIPOS_TAREA[t.tipo])}</b>
+      <span style="color:var(--suave)"> · ${fecha ? esc(fechaLarga(fecha)) : 'fecha por concretar'}</span>
+    </div>`;
+  }
+
+  if (mt.length){
     html += '<div class="tabla-wrap"><table><tbody>';
     for (const t of mt){
       html += `<tr><td><b>${esc(fechaCorta(dia(t.dia_id).fecha))}</b></td>
@@ -261,6 +291,8 @@ function pintarMias(){
         <td style="color:var(--suave)">${esc(t.notas || '')}</td></tr>`;
     }
     html += '</tbody></table></div>';
+  } else if (!misTareas.length){
+    html += '<p class="vacio">No tienes turnos ni tareas asignadas.</p>';
   }
   html += '</div>';
 

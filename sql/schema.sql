@@ -5,6 +5,7 @@
 
 -- Limpieza (por si re-ejecutas)
 drop table if exists apuntes cascade;
+drop table if exists tareas cascade;
 drop table if exists turnos cascade;
 drop table if exists pagos cascade;
 drop table if exists gastos cascade;
@@ -71,12 +72,23 @@ create index on apuntes (persona_id);
 create table turnos (
   id          bigserial primary key,
   dia_id      bigint not null references dias(id) on delete cascade,
-  tipo        text   not null check (tipo in ('montaje','recogida','limpieza','cocina_comida','cocina_cena')),
+  tipo        text   not null check (tipo in ('limpieza','cocina_comida','cocina_cena')),
   persona_id  bigint references personas(id) on delete set null,
   codigo      text,
   notas       text
 );
 create index on turnos (dia_id);
+
+-- ------------------------------------------------------------
+-- TAREAS de peña: montaje (antes de fiestas) y recogida (después).
+-- Van por grupo de personas, no por día.
+-- ------------------------------------------------------------
+create table tareas (
+  id          bigserial primary key,
+  tipo        text   not null check (tipo in ('montaje','recogida')),
+  persona_id  bigint not null references personas(id) on delete cascade,
+  unique (tipo, persona_id)
+);
 
 -- ------------------------------------------------------------
 -- GASTOS GENERALES (los reparten los socios segun peso)
@@ -111,6 +123,8 @@ create table config (
 
 insert into config (clave, valor) values
   ('codigo_tesorero', 'melon'),
+  ('fecha_montaje',   ''),
+  ('fecha_recogida',  ''),
   ('nombre_peña',     'Peña La Paya'),
   ('año',             '2026');
 
@@ -124,6 +138,7 @@ alter table personas enable row level security;
 alter table dias     enable row level security;
 alter table apuntes  enable row level security;
 alter table turnos   enable row level security;
+alter table tareas   enable row level security;
 alter table gastos   enable row level security;
 alter table pagos    enable row level security;
 alter table config   enable row level security;
@@ -133,6 +148,7 @@ create policy "lectura publica" on personas for select using (true);
 create policy "lectura publica" on dias     for select using (true);
 create policy "lectura publica" on apuntes  for select using (true);
 create policy "lectura publica" on turnos   for select using (true);
+create policy "lectura publica" on tareas   for select using (true);
 create policy "lectura publica" on gastos   for select using (true);
 create policy "lectura publica" on pagos    for select using (true);
 create policy "lectura publica" on config   for select using (true);
@@ -142,6 +158,7 @@ create policy "admin total" on personas for all using (auth.role() = 'authentica
 create policy "admin total" on dias     for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "admin total" on apuntes  for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "admin total" on turnos   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
+create policy "admin total" on tareas   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "admin total" on gastos   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "admin total" on pagos    for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');
 create policy "admin total" on config   for all using (auth.role() = 'authenticated') with check (auth.role() = 'authenticated');

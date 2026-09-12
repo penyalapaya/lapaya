@@ -6,7 +6,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // Datos en memoria
 const DB = {
-  personas: [], dias: [], apuntes: [], turnos: [],
+  personas: [], dias: [], apuntes: [], turnos: [], tareas: [],
   gastos: [], pagos: [], config: {}
 };
 
@@ -15,12 +15,16 @@ const MODALIDADES = {
   con_sobremesa:  'Con sobremesa',
   solo_sobremesa: 'Solo sobremesa'
 };
+// Turnos de cada día
 const TIPOS_TURNO = {
-  montaje:      'Montaje / llevar trastos',
-  recogida:     'Recogida de trastos',
   limpieza:     'Limpieza',
   cocina_comida:'Cocina · comida',
   cocina_cena:  'Cocina · cena'
+};
+// Tareas de peña, sin día: se hacen antes y después de las fiestas
+const TIPOS_TAREA = {
+  montaje:  'Montaje · llevar trastos al local',
+  recogida: 'Recogida · devolver los trastos'
 };
 
 // ---------- utilidades ----------
@@ -55,23 +59,25 @@ function aviso(contenedor, texto, tipo='ok'){
 
 // ---------- carga ----------
 async function cargarTodo(){
-  const [personas, dias, apuntes, turnos, gastos, pagos, config] = await Promise.all([
+  const [personas, dias, apuntes, turnos, tareas, gastos, pagos, config] = await Promise.all([
     sb.from('personas').select('*').order('nombre'),
     sb.from('dias').select('*').order('fecha'),
     sb.from('apuntes').select('*'),
     sb.from('turnos').select('*'),
+    sb.from('tareas').select('*'),
     sb.from('gastos').select('*').order('fecha'),
     sb.from('pagos').select('*').order('fecha'),
     sb.from('config').select('*')
   ]);
 
-  const fallo = [personas, dias, apuntes, turnos, gastos, pagos, config].find(r => r.error);
+  const fallo = [personas, dias, apuntes, turnos, tareas, gastos, pagos, config].find(r => r.error);
   if (fallo) throw new Error(fallo.error.message);
 
   DB.personas = personas.data;
   DB.dias     = dias.data;
   DB.apuntes  = apuntes.data;
   DB.turnos   = turnos.data;
+  DB.tareas   = tareas.data;
   DB.gastos   = gastos.data;
   DB.pagos    = pagos.data;
   DB.config   = Object.fromEntries(config.data.map(c => [c.clave, c.valor]));
@@ -90,6 +96,12 @@ function apuntesDe(dia_id, servicio){
 }
 function turnosDe(dia_id){
   return DB.turnos.filter(t => t.dia_id === dia_id);
+}
+// Personas asignadas a una tarea de peña ('montaje' o 'recogida')
+function personasTarea(tipo){
+  return DB.tareas.filter(t => t.tipo === tipo)
+    .map(t => persona(t.persona_id)).filter(Boolean)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 
 // Precio de un apunte según el día, servicio y modalidad
