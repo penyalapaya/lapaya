@@ -57,7 +57,7 @@ async function abrirPanel(){
 
 function pintarTodo(){
   pintarPersonas(); pintarDias(); pintarApuntes();
-  pintarTurnosAdmin(); pintarGastos(); pintarConfig();
+  pintarTurnosAdmin(); pintarCobrosAdmin(); pintarGastos(); pintarConfig();
 }
 
 async function recargar(){ await cargarTodo(); pintarTodo(); }
@@ -149,7 +149,12 @@ async function generarDias(){
 
 function pintarDias(){
   if (!DB.dias.length){ $('#listaDias').innerHTML = '<p class="vacio">Sin días. Créalos arriba.</p>'; return; }
-  let html = '';
+  const {comida, sobremesa} = totalPorCategoria();
+  let html = `<div class="panel"><h2>Total a recaudar por comidas</h2>
+    <div class="tarjetas">
+      <div><div class="dato">${eur(comida)}<small>total comida · se compra día a día</small></div></div>
+      <div><div class="dato">${eur(sobremesa)}<small>total sobremesa · se compra de una vez</small></div></div>
+    </div></div>`;
   for (const d of DB.dias){
     html += `<div class="panel">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -163,9 +168,10 @@ function pintarDias(){
       <div class="fila">
         <div style="flex:2 1 260px"><label>Menú</label>
           <input style="width:100%" value="${esc(d.menu_comida || '')}" onchange="editarDia(${d.id},'menu_comida',this.value)"></div>
-        <div><label>Solo comer €</label><input type="number" step="0.01" value="${d.p_comida}" onchange="editarDia(${d.id},'p_comida',Number(this.value))"></div>
-        <div><label>Con sobremesa €</label><input type="number" step="0.01" value="${d.p_comida_sob}" onchange="editarDia(${d.id},'p_comida_sob',Number(this.value))"></div>
-        <div><label>Solo sobremesa €</label><input type="number" step="0.01" value="${d.p_sob_comida}" onchange="editarDia(${d.id},'p_sob_comida',Number(this.value))"></div>
+        <div><label>Solo comer €</label><input type="number" step="0.01" value="${d.p_comida}" onchange="editarPrecio(${d.id},'p_comida',Number(this.value))"></div>
+        <div><label>Solo sobremesa €</label><input type="number" step="0.01" value="${d.p_sob_comida}" onchange="editarPrecio(${d.id},'p_sob_comida',Number(this.value))"></div>
+        <div><label>Con sobremesa €</label><input type="number" step="0.01" value="${d.p_comida_sob}" disabled
+              title="Se calcula solo: comer + sobremesa"></div>
       </div>
 
       <h3><label style="display:inline;font-size:.95rem">
@@ -174,13 +180,35 @@ function pintarDias(){
       <div class="fila">
         <div style="flex:2 1 260px"><label>Menú</label>
           <input style="width:100%" value="${esc(d.menu_cena || '')}" onchange="editarDia(${d.id},'menu_cena',this.value)"></div>
-        <div><label>Solo cenar €</label><input type="number" step="0.01" value="${d.p_cena}" onchange="editarDia(${d.id},'p_cena',Number(this.value))"></div>
-        <div><label>Con sobremesa €</label><input type="number" step="0.01" value="${d.p_cena_sob}" onchange="editarDia(${d.id},'p_cena_sob',Number(this.value))"></div>
-        <div><label>Solo sobremesa €</label><input type="number" step="0.01" value="${d.p_sob_cena}" onchange="editarDia(${d.id},'p_sob_cena',Number(this.value))"></div>
+        <div><label>Solo cenar €</label><input type="number" step="0.01" value="${d.p_cena}" onchange="editarPrecio(${d.id},'p_cena',Number(this.value))"></div>
+        <div><label>Solo sobremesa €</label><input type="number" step="0.01" value="${d.p_sob_cena}" onchange="editarPrecio(${d.id},'p_sob_cena',Number(this.value))"></div>
+        <div><label>Con sobremesa €</label><input type="number" step="0.01" value="${d.p_cena_sob}" disabled
+              title="Se calcula solo: cenar + sobremesa"></div>
       </div>
     </div>`;
   }
   $('#listaDias').innerHTML = html;
+}
+
+// El precio "con sobremesa" no se toca a mano: es solo comer + solo sobremesa
+const GRUPOS_PRECIO = {
+  p_comida:     {solo:'p_comida', sob:'p_sob_comida', junto:'p_comida_sob'},
+  p_sob_comida: {solo:'p_comida', sob:'p_sob_comida', junto:'p_comida_sob'},
+  p_cena:       {solo:'p_cena',   sob:'p_sob_cena',   junto:'p_cena_sob'},
+  p_sob_cena:   {solo:'p_cena',   sob:'p_sob_cena',   junto:'p_cena_sob'}
+};
+
+async function editarPrecio(id, campo, valor){
+  const d = dia(id);
+  const g = GRUPOS_PRECIO[campo];
+  const solo = campo === g.solo ? valor : Number(d[g.solo]);
+  const sob  = campo === g.sob  ? valor : Number(d[g.sob]);
+  const cambios = {[campo]: valor, [g.junto]: solo + sob};
+
+  const {error} = await sb.from('dias').update(cambios).eq('id', id);
+  if (error) return aviso('#estado', error.message, 'err');
+  Object.assign(d, cambios);
+  pintarDias(); pintarApuntes();
 }
 
 async function editarDia(id, campo, valor){
@@ -234,8 +262,7 @@ function pintarApuntes(){
       const m = a ? a.modalidad : '';
       html += `<tr>
         <td>${esc(p.nombre)} ${p.tipo === 'invitado' ? '<span class="pill inv">inv.</span>' : ''}</td>
-        <td><button class="mod ${claseModalidad(m)}"
-              onclick="rotarApunte(${p.id}, ${d.id}, '${servicio}')">${esc(etiquetaModalidad(servicio, m))}</button></td>
+        <td>${botonesModalidad(p.id, d.id, servicio, m)}</td>
         <td class="num">${a ? eur(precioApunte(a)) : '—'}</td>
       </tr>`;
     }
@@ -247,24 +274,24 @@ function pintarApuntes(){
   $('#matrizApuntes').innerHTML = html;
 }
 
-// Ciclo del botón rotativo: no viene -> solo comer -> con sobremesa -> solo sobremesa -> no viene
-const CICLO = ['', 'completo', 'con_sobremesa', 'solo_sobremesa'];
-
-function etiquetaModalidad(servicio, m){
-  if (!m) return 'No viene';
-  if (m === 'completo')       return servicio === 'comida' ? 'Solo comer' : 'Solo cenar';
-  if (m === 'con_sobremesa')  return 'Con sobremesa';
-  return 'Solo sobremesa';
-}
 function claseModalidad(m){
   return {'': 'm-no', completo: 'm-completo', con_sobremesa: 'm-sob', solo_sobremesa: 'm-solosob'}[m];
 }
 
-function rotarApunte(persona_id, dia_id, servicio){
-  const a = DB.apuntes.find(x => x.persona_id === persona_id && x.dia_id === dia_id && x.servicio === servicio);
-  const actual = a ? a.modalidad : '';
-  const siguiente = CICLO[(CICLO.indexOf(actual) + 1) % CICLO.length];
-  return ponerApunte(persona_id, dia_id, servicio, siguiente);
+// 4 botones para elegir de golpe la modalidad de una persona ese día/servicio.
+// En móvil solo se ve el icono (ver CSS .mseg .txt / .ico).
+function botonesModalidad(persona_id, dia_id, servicio, actual){
+  const opciones = [
+    {valor:'',               texto:'No viene',                                          icono:'✕'},
+    {valor:'con_sobremesa',  texto:'Comida y sobremesa',                                icono:'🍔🥂'},
+    {valor:'completo',       texto: servicio === 'comida' ? 'Solo comer' : 'Solo cenar', icono:'🍔'},
+    {valor:'solo_sobremesa', texto:'Solo sobremesa',                                    icono:'🥂'}
+  ];
+  return '<div class="grupo-mod">' + opciones.map(o => `
+    <button class="mod mseg ${claseModalidad(o.valor)} ${actual === o.valor ? 'on' : ''}"
+      onclick="ponerApunte(${persona_id}, ${dia_id}, '${servicio}', '${o.valor}')">
+      <span class="txt">${esc(o.texto)}</span><span class="ico">${o.icono}</span>
+    </button>`).join('') + '</div>';
 }
 
 async function ponerApunte(persona_id, dia_id, servicio, modalidad){
@@ -442,6 +469,93 @@ function palabraAleatoria(){
   const libres = PALABRAS.filter(p => !usadas.has(p));
   if (libres.length) return libres[Math.floor(Math.random() * libres.length)];
   return PALABRAS[Math.floor(Math.random() * PALABRAS.length)] + Math.floor(Math.random() * 90 + 10);
+}
+
+// ============================================================
+// COBROS (marcar pagos de comidas de golpe o uno a uno)
+// ============================================================
+function pintarCobrosAdmin(){
+  $('#adminCobros').innerHTML = pintarCobrosPorPersona() + pintarCobrosPorDia();
+}
+
+function pintarCobrosPorPersona(){
+  const cuentas = calcularCuentas().filter(c => c.nComidas > 0)
+    .sort((a, b) => a.persona.nombre.localeCompare(b.persona.nombre));
+  if (!cuentas.length) return '<div class="panel"><h2>Por persona</h2><p class="vacio">Nadie apuntado todavía.</p></div>';
+
+  let html = `<div class="panel"><h2>Por persona</h2><div class="tabla-wrap"><table><thead><tr>
+    <th>Persona</th><th class="num">Total comidas</th><th class="num">Pagado</th><th class="num">Falta</th><th></th></tr></thead><tbody>`;
+  for (const c of cuentas){
+    html += `<tr>
+      <td>${esc(c.persona.nombre)} ${c.persona.tipo === 'invitado' ? '<span class="pill inv">inv.</span>' : ''}</td>
+      <td class="num">${eur(c.consumo)}</td>
+      <td class="num">${eur(c.consumoPagado)}</td>
+      <td class="num ${c.consumoDebe > 0.005 ? 'debe' : 'saldado'}">${c.consumoDebe > 0.005 ? eur(c.consumoDebe) : '✓'}</td>
+      <td>
+        <button class="mini" onclick="marcarPagadoPersona(${c.persona.id}, true)">Todo pagado</button>
+        <button class="mini sec" onclick="marcarPagadoPersona(${c.persona.id}, false)">Todo pendiente</button>
+      </td></tr>`;
+  }
+  return html + '</tbody></table></div></div>';
+}
+
+function pintarCobrosPorDia(){
+  let html = '';
+  for (const d of DB.dias){
+    for (const servicio of ['comida', 'cena']){
+      const activo = servicio === 'comida' ? d.hay_comida : d.hay_cena;
+      if (!activo) continue;
+      const lista = apuntesDe(d.id, servicio)
+        .map(a => ({a, p: persona(a.persona_id)})).filter(x => x.p)
+        .sort((x, y) => x.p.nombre.localeCompare(y.p.nombre));
+      if (!lista.length) continue;
+
+      const pendiente = lista.filter(x => !x.a.pagado).reduce((s, x) => s + precioApunte(x.a), 0);
+      html += `<div class="panel">
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <h3 style="margin:0">${esc(fechaCorta(d.fecha))} · ${servicio === 'comida' ? 'Comida' : 'Cena'}</h3>
+          <span style="color:var(--tinta-70);font-size:.85rem">Falta por cobrar: ${eur(pendiente)}</span>
+        </div>
+        <div class="fila" style="margin:10px 0 4px">
+          <div style="flex:0 0 auto"><button class="mini" onclick="marcarPagadoServicio(${d.id},'${servicio}',true)">Marcar todos pagados</button></div>
+          <div style="flex:0 0 auto"><button class="mini sec" onclick="marcarPagadoServicio(${d.id},'${servicio}',false)">Marcar todos pendientes</button></div>
+        </div>
+        <div class="tabla-wrap"><table><thead><tr><th>Persona</th><th>Modalidad</th><th class="num">Precio</th><th>Pagado</th></tr></thead><tbody>`;
+      for (const {a, p} of lista){
+        html += `<tr><td>${esc(p.nombre)}</td><td>${esc(MODALIDADES[a.modalidad])}</td>
+          <td class="num">${eur(precioApunte(a))}</td>
+          <td><input type="checkbox" ${a.pagado ? 'checked' : ''} onchange="marcarPagadoApunte(${a.id}, this.checked)"></td></tr>`;
+      }
+      html += '</tbody></table></div></div>';
+    }
+  }
+  return html || '<div class="panel"><h2>Por comida</h2><p class="vacio">Nadie apuntado todavía.</p></div>';
+}
+
+async function marcarPagadoPersona(persona_id, pagado){
+  const ids = DB.apuntes.filter(a => a.persona_id === persona_id).map(a => a.id);
+  if (!ids.length) return;
+  const {error} = await sb.from('apuntes').update({pagado}).in('id', ids);
+  if (error) return aviso('#estado', error.message, 'err');
+  for (const a of DB.apuntes) if (ids.includes(a.id)) a.pagado = pagado;
+  pintarCobrosAdmin();
+}
+
+async function marcarPagadoServicio(dia_id, servicio, pagado){
+  const ids = apuntesDe(dia_id, servicio).map(a => a.id);
+  if (!ids.length) return;
+  const {error} = await sb.from('apuntes').update({pagado}).in('id', ids);
+  if (error) return aviso('#estado', error.message, 'err');
+  for (const a of DB.apuntes) if (ids.includes(a.id)) a.pagado = pagado;
+  pintarCobrosAdmin();
+}
+
+async function marcarPagadoApunte(apunte_id, pagado){
+  const {error} = await sb.from('apuntes').update({pagado}).eq('id', apunte_id);
+  if (error) return aviso('#estado', error.message, 'err');
+  const a = DB.apuntes.find(x => x.id === apunte_id);
+  if (a) a.pagado = pagado;
+  pintarCobrosAdmin();
 }
 
 // ============================================================

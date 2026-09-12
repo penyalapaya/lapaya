@@ -129,6 +129,29 @@ function precioApunte(a){
   return Number(tabla[a.modalidad]) || 0;
 }
 
+// Lo que paga de comida: siempre el precio de "solo comer", salvo quien
+// solo viene a la sobremesa, que no come.
+function parteComida(a){
+  const d = dia(a.dia_id);
+  if (!d || a.modalidad === 'solo_sobremesa') return 0;
+  return Number(a.servicio === 'comida' ? d.p_comida : d.p_cena) || 0;
+}
+// Lo que paga de sobremesa: el resto de lo que paga
+function parteSobremesa(a){
+  return precioApunte(a) - parteComida(a);
+}
+
+// Desglose del dinero de las comidas: lo que se compra día a día (comida)
+// frente a lo que se compra de una vez al principio (sobremesa).
+function totalPorCategoria(){
+  let comida = 0, sobremesa = 0;
+  for (const a of DB.apuntes){
+    comida    += parteComida(a);
+    sobremesa += parteSobremesa(a);
+  }
+  return {comida, sobremesa};
+}
+
 // ---------- cálculo de cuentas ----------
 // Devuelve un objeto por persona con consumo, cuota de generales, pagado y deuda.
 function calcularCuentas(){
@@ -140,6 +163,8 @@ function calcularCuentas(){
 
     const consumo        = mios.reduce((s, a) => s + precioApunte(a), 0);
     const consumoPagado  = mios.filter(a => a.pagado).reduce((s, a) => s + precioApunte(a), 0);
+    const consumoComida    = mios.reduce((s, a) => s + parteComida(a), 0);
+    const consumoSobremesa = mios.reduce((s, a) => s + parteSobremesa(a), 0);
 
     const cuotaGenerales   = p.tipo === 'socio' && p.activo
       ? totalGastos * Number(p.peso) / pesoTotal
@@ -151,6 +176,7 @@ function calcularCuentas(){
     return {
       persona: p,
       consumo, consumoPagado,
+      consumoComida, consumoSobremesa,
       consumoDebe: consumo - consumoPagado,
       cuotaGenerales, generalesPagados,
       generalesDebe: cuotaGenerales - generalesPagados,

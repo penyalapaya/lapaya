@@ -94,10 +94,12 @@ function pintarDia(){
 
 function tarjetaRecuento(titulo, lista, menu){
   const conSob = lista.filter(a => a.modalidad !== 'completo').length;
+  const dineroComida = lista.reduce((s, a) => s + parteComida(a), 0);
   return `<div class="panel">
     <h3 style="margin-top:0">${titulo}</h3>
     <div class="dato">${lista.length}<small>personas en total</small></div>
     <div style="margin-top:6px;font-size:.85rem;color:var(--tinta-70)">${conSob} se quedan a la sobremesa</div>
+    <div style="margin-top:6px;font-weight:700;color:var(--verde-900)">${eur(dineroComida)}<span style="font-weight:400;color:var(--tinta-70)"> para cocinar</span></div>
     ${menu ? `<div style="margin-top:10px"><b>Menú:</b> ${esc(menu)}</div>` : ''}
   </div>`;
 }
@@ -217,7 +219,14 @@ function pintarCuentas(){
   const cuentas = calcularCuentas().filter(c => c.persona.activo);
   const totalGastos = DB.gastos.reduce((s, g) => s + Number(g.importe), 0);
 
-  let html = `<div class="panel"><h2>Gastos generales</h2>
+  const {comida, sobremesa} = totalPorCategoria();
+  let html = `<div class="panel"><h2>Recaudación de comidas</h2>
+    <div class="tarjetas">
+      <div><div class="dato">${eur(comida)}<small>total comida · se compra día a día</small></div></div>
+      <div><div class="dato">${eur(sobremesa)}<small>total sobremesa · se compra de una vez</small></div></div>
+    </div></div>`;
+
+  html += `<div class="panel"><h2>Gastos generales</h2>
     <div class="dato">${eur(totalGastos)}<small>se reparten entre los ${socios().length} socios</small></div>`;
   if (DB.gastos.length){
     html += '<div class="tabla-wrap" style="margin-top:10px"><table><thead><tr><th>Concepto</th><th>Pagó</th><th class="num">Importe</th></tr></thead><tbody>';
@@ -230,14 +239,15 @@ function pintarCuentas(){
   html += '</div>';
 
   html += `<div class="panel"><h2>Cuentas por persona</h2><div class="tabla-wrap"><table><thead><tr>
-      <th>Persona</th><th class="num">Comidas</th><th class="num">Generales</th>
+      <th>Persona</th><th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Generales</th>
       <th class="num">Total</th><th class="num">Pagado</th><th class="num">Debe</th></tr></thead><tbody>`;
 
   const orden = [...cuentas].sort((a, b) => a.persona.nombre.localeCompare(b.persona.nombre));
   for (const c of orden){
     html += `<tr>
       <td>${esc(c.persona.nombre)} ${c.persona.tipo === 'invitado' ? '<span class="pill inv">inv.</span>' : ''}</td>
-      <td class="num">${eur(c.consumo)}</td>
+      <td class="num">${eur(c.consumoComida)}</td>
+      <td class="num">${eur(c.consumoSobremesa)}</td>
       <td class="num">${c.persona.tipo === 'invitado' ? '—' : eur(c.cuotaGenerales)}</td>
       <td class="num">${eur(c.total)}</td>
       <td class="num">${eur(c.pagado)}</td>
@@ -246,7 +256,8 @@ function pintarCuentas(){
   }
   const sum = k => cuentas.reduce((s, c) => s + c[k], 0);
   html += `</tbody><tfoot><tr class="total">
-      <td>TOTAL</td><td class="num">${eur(sum('consumo'))}</td><td class="num">${eur(sum('cuotaGenerales'))}</td>
+      <td>TOTAL</td><td class="num">${eur(sum('consumoComida'))}</td><td class="num">${eur(sum('consumoSobremesa'))}</td>
+      <td class="num">${eur(sum('cuotaGenerales'))}</td>
       <td class="num">${eur(sum('total'))}</td><td class="num">${eur(sum('pagado'))}</td>
       <td class="num">${eur(sum('debe'))}</td></tr></tfoot></table></div></div>`;
 
@@ -270,65 +281,67 @@ function pintarMias(){
   const p = persona(id);
   const c = calcularCuentas().find(x => x.persona.id === id);
 
-  let html = `<div class="panel"><h2>Tu cuenta</h2><div class="tarjetas">
-      <div><div class="dato">${eur(c.total)}<small>total que te toca</small></div></div>
-      <div><div class="dato">${eur(c.pagado)}<small>ya has pagado</small></div></div>
-      <div><div class="dato ${c.debe > 0.005 ? 'debe' : 'saldado'}">${eur(c.debe)}<small>te falta por pagar</small></div></div>
-    </div>`;
-  if (p.tipo === 'socio'){
-    html += `<p style="font-size:.85rem;color:var(--tinta-70)">
-      Incluye ${eur(c.cuotaGenerales)} de gastos generales (de los que llevas pagados ${eur(c.generalesPagados)}).</p>`;
-  } else {
-    const s = persona(p.socio_id);
-    html += `<p style="font-size:.85rem;color:var(--tinta-70)">Eres invitado${s ? ' de ' + esc(s.nombre) : ''}: no pagas gastos generales.</p>`;
-  }
-  html += '</div>';
-
-  // mis comidas
-  const mios = DB.apuntes.filter(a => a.persona_id === id)
-    .sort((a, b) => (dia(a.dia_id)?.fecha || '').localeCompare(dia(b.dia_id)?.fecha || ''));
-  html += '<div class="panel"><h2>Tus comidas y cenas</h2>';
-  if (!mios.length) html += '<p class="vacio">No estás apuntado a nada todavía.</p>';
-  else {
-    html += '<div class="tabla-wrap"><table><thead><tr><th>Día</th><th>Servicio</th><th>Modalidad</th><th class="num">Precio</th><th>Cobro</th></tr></thead><tbody>';
-    for (const a of mios){
-      html += `<tr><td>${esc(fechaCorta(dia(a.dia_id).fecha))}</td>
-        <td>${a.servicio === 'comida' ? 'Comida' : 'Cena'}</td>
-        <td>${esc(MODALIDADES[a.modalidad])}</td>
-        <td class="num">${eur(precioApunte(a))}</td>
-        <td>${a.pagado ? '<span class="pill ok">pagado</span>' : '<span class="pill no">pendiente</span>'}</td></tr>`;
-    }
-    html += '</tbody></table></div>';
-  }
-  html += '</div>';
-
   // mis turnos por día y mis tareas de peña
   const mt = DB.turnos.filter(t => t.persona_id === id)
     .sort((a, b) => (dia(a.dia_id)?.fecha || '').localeCompare(dia(b.dia_id)?.fecha || ''));
   const misTareas = DB.tareas.filter(t => t.persona_id === id);
 
-  html += '<div class="panel"><h2>Tus turnos</h2>';
+  let htmlTurnos = '<div class="panel"><h2>Tus turnos</h2>';
 
   for (const t of misTareas){
     const fecha = DB.config['fecha_' + t.tipo];
-    html += `<div style="padding:9px 11px;background:var(--verde-50);border-radius:7px;margin-bottom:8px">
+    htmlTurnos += `<div style="padding:9px 11px;background:var(--verde-50);border-radius:7px;margin-bottom:8px">
       <b>${esc(TIPOS_TAREA[t.tipo])}</b>
       <span style="color:var(--tinta-70)"> · ${fecha ? esc(fechaLarga(fecha)) : 'fecha por concretar'}</span>
     </div>`;
   }
 
   if (mt.length){
-    html += '<div class="tabla-wrap"><table><tbody>';
+    htmlTurnos += '<div class="tabla-wrap"><table><tbody>';
     for (const t of mt){
-      html += `<tr><td><b>${esc(fechaCorta(dia(t.dia_id).fecha))}</b></td>
+      htmlTurnos += `<tr><td><b>${esc(fechaCorta(dia(t.dia_id).fecha))}</b></td>
         <td>${esc(TIPOS_TURNO[t.tipo])}</td>
         <td style="color:var(--tinta-70)">${esc(t.notas || '')}</td></tr>`;
     }
-    html += '</tbody></table></div>';
+    htmlTurnos += '</tbody></table></div>';
   } else if (!misTareas.length){
-    html += '<p class="vacio">No tienes turnos ni tareas asignadas.</p>';
+    htmlTurnos += '<p class="vacio">No tienes turnos ni tareas asignadas.</p>';
   }
-  html += '</div>';
+  htmlTurnos += '</div>';
+
+  let htmlCuenta = `<div class="panel"><h2>Tu cuenta</h2><div class="tarjetas">
+      <div><div class="dato">${eur(c.total)}<small>total que te toca</small></div></div>
+      <div><div class="dato">${eur(c.pagado)}<small>ya has pagado</small></div></div>
+      <div><div class="dato ${c.debe > 0.005 ? 'debe' : 'saldado'}">${eur(c.debe)}<small>te falta por pagar</small></div></div>
+    </div>`;
+  if (p.tipo === 'socio'){
+    htmlCuenta += `<p style="font-size:.85rem;color:var(--tinta-70)">
+      Incluye ${eur(c.cuotaGenerales)} de gastos generales (de los que llevas pagados ${eur(c.generalesPagados)}).</p>`;
+  } else {
+    const s = persona(p.socio_id);
+    htmlCuenta += `<p style="font-size:.85rem;color:var(--tinta-70)">Eres invitado${s ? ' de ' + esc(s.nombre) : ''}: no pagas gastos generales.</p>`;
+  }
+  htmlCuenta += '</div>';
+
+  // mis comidas
+  const mios = DB.apuntes.filter(a => a.persona_id === id)
+    .sort((a, b) => (dia(a.dia_id)?.fecha || '').localeCompare(dia(b.dia_id)?.fecha || ''));
+  let htmlComidas = '<div class="panel"><h2>Tus comidas y cenas</h2>';
+  if (!mios.length) htmlComidas += '<p class="vacio">No estás apuntado a nada todavía.</p>';
+  else {
+    htmlComidas += '<div class="tabla-wrap"><table><thead><tr><th>Día</th><th>Servicio</th><th>Modalidad</th><th class="num">Precio</th><th>Cobro</th></tr></thead><tbody>';
+    for (const a of mios){
+      htmlComidas += `<tr><td>${esc(fechaCorta(dia(a.dia_id).fecha))}</td>
+        <td>${a.servicio === 'comida' ? 'Comida' : 'Cena'}</td>
+        <td>${esc(MODALIDADES[a.modalidad])}</td>
+        <td class="num">${eur(precioApunte(a))}</td>
+        <td>${a.pagado ? '<span class="pill ok">pagado</span>' : '<span class="pill no">pendiente</span>'}</td></tr>`;
+    }
+    htmlComidas += '</tbody></table></div>';
+  }
+  htmlComidas += '</div>';
+
+  const html = htmlTurnos + htmlCuenta + htmlComidas;
 
   $('#mias').innerHTML = html;
 }

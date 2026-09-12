@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Administración · La Paya</title>
+<link rel="icon" href="imgs/favicon.ico">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header>
+  <img src="imgs/logo.png" alt="" class="logo">
   <div>
     <h1>Administración</h1>
     <div class="sub">Peña La Paya</div>
@@ -44,6 +46,7 @@
   <button data-tab="dias">Días y precios</button>
   <button data-tab="apuntes">Apuntar comidas</button>
   <button data-tab="turnos">Turnos</button>
+  <button data-tab="cobros">Cobros</button>
   <button data-tab="gastos">Gastos generales</button>
   <button data-tab="config">Ajustes</button>
 </nav>
@@ -92,6 +95,15 @@
   </section>
 
   <section class="tab" id="tab-turnos"><div id="adminTurnos"></div></section>
+
+  <section class="tab" id="tab-cobros">
+    <div class="panel">
+      <h2>Marcar pagos</h2>
+      <p style="font-size:.82rem;color:var(--tinta-70);margin-top:0">
+        Marca de golpe todo lo de una persona o toda una comida, o marca comida a comida y persona a persona en las tablas de abajo.</p>
+    </div>
+    <div id="adminCobros"></div>
+  </section>
 
   <section class="tab" id="tab-gastos">
     <div class="panel">

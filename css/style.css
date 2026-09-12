@@ -56,6 +56,14 @@ header{
   gap:16px;
   flex-wrap:wrap;
 }
+header .logo{
+  height:46px;
+  width:46px;
+  object-fit:contain;
+  border-radius:10px;
+  background:rgba(255,255,255,.9);
+  padding:4px;
+}
 header h1{
   margin:0;
   font-size:1.4rem;
@@ -263,6 +271,7 @@ input:focus,select:focus,textarea:focus{
   box-shadow:0 0 0 3px var(--verde-100);
 }
 input[type=number]{text-align:right}
+input:disabled{background:var(--fondo); color:var(--tinta-40); cursor:not-allowed}
 input[type=checkbox]{
   width:17px; height:17px;
   accent-color:var(--verde-700);
@@ -403,6 +412,18 @@ button.mod.m-sob:hover     {background:var(--verde-500)}
 button.mod.m-solosob       {background:var(--ambar-100); color:var(--ambar)}
 button.mod.m-solosob:hover {background:#f9e5bd}
 
+/* Grupo de 4 botones para elegir modalidad de golpe */
+.grupo-mod{display:inline-flex; flex-wrap:wrap; gap:4px}
+button.mod.mseg{
+  min-width:0;
+  padding:6px 10px;
+  font-size:.76rem;
+  border:2px solid transparent;
+  opacity:.45;
+}
+button.mod.mseg.on{opacity:1; border-color:currentColor}
+.mseg .ico{display:none}
+
 /* ============================================================
    Personas asignadas a un turno
    ============================================================ */
@@ -469,6 +490,9 @@ select.anadir:hover{border-color:var(--verde-500); color:var(--verde-700)}
   .dato{font-size:1.6rem}
   .navdia .fecha{font-size:.95rem; min-width:0}
   button.mod{min-width:128px; padding:10px 8px}
+  button.mod.mseg{min-width:0; padding:7px 9px; font-size:1.05rem}
+  .mseg .txt{display:none}
+  .mseg .ico{display:inline}
 }
 
 /* Cabecera de tabla a dos alturas (calendario) */
