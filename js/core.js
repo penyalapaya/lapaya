@@ -97,6 +97,20 @@ function apuntesDe(dia_id, servicio){
 function turnosDe(dia_id){
   return DB.turnos.filter(t => t.dia_id === dia_id);
 }
+// Un turno puede tener varias personas
+function turnosPorTipo(dia_id, tipo){
+  return DB.turnos.filter(t => t.dia_id === dia_id && t.tipo === tipo);
+}
+function personasTurno(dia_id, tipo){
+  return turnosPorTipo(dia_id, tipo)
+    .map(t => persona(t.persona_id)).filter(Boolean)
+    .sort((a, b) => a.nombre.localeCompare(b.nombre));
+}
+// Código compartido por todos los responsables de ese turno
+function codigoTurno(dia_id, tipo){
+  const t = turnosPorTipo(dia_id, tipo).find(x => x.codigo);
+  return t ? t.codigo : '';
+}
 // Personas asignadas a una tarea de peña ('montaje' o 'recogida')
 function personasTarea(tipo){
   return DB.tareas.filter(t => t.tipo === tipo)

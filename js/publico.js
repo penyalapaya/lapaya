@@ -71,15 +71,15 @@ function pintarDia(){
   html += '</div>';
 
   // turnos del día
-  const ts = turnosDe(d.id);
   html += '<div class="panel"><h2>Turnos del día</h2>';
-  if (!ts.length) html += '<p class="vacio">Sin turnos asignados.</p>';
+  if (!turnosDe(d.id).length) html += '<p class="vacio">Sin turnos asignados.</p>';
   else {
     html += '<div class="tabla-wrap"><table><tbody>';
-    for (const t of ts){
-      const p = persona(t.persona_id);
-      html += `<tr><th>${esc(TIPOS_TURNO[t.tipo])}</th><td>${p ? esc(p.nombre) : '<i>sin asignar</i>'}</td>
-               <td style="color:var(--suave)">${esc(t.notas || '')}</td></tr>`;
+    for (const tipo of Object.keys(TIPOS_TURNO)){
+      const gente = personasTurno(d.id, tipo);
+      if (!gente.length) continue;
+      html += `<tr><th>${esc(TIPOS_TURNO[tipo])}</th>
+        <td>${gente.map(p => esc(p.nombre)).join(' · ')}</td></tr>`;
     }
     html += '</tbody></table></div>';
   }
@@ -168,9 +168,10 @@ function pintarTurnos(){
   for (const d of DB.dias){
     html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
     for (const t of tipos){
-      const turno = DB.turnos.find(x => x.dia_id === d.id && x.tipo === t);
-      const p = turno && persona(turno.persona_id);
-      html += `<td>${p ? esc(p.nombre) : '<span style="color:var(--linea)">·</span>'}</td>`;
+      const gente = personasTurno(d.id, t);
+      html += `<td>${gente.length
+        ? gente.map(p => esc(p.nombre)).join('<br>')
+        : '<span style="color:var(--linea)">·</span>'}</td>`;
     }
     html += '</tr>';
   }
@@ -309,7 +310,16 @@ function comprobarCodigo(){
     aviso('#avisoCobros', 'Código de tesorero correcto.', 'ok');
     return pintarCobros();
   }
-  const mis = DB.turnos.filter(t => (t.codigo || '').trim().toLowerCase() === codigo && t.codigo);
+  // varios responsables comparten código, así que puede haber filas repetidas
+  const vistos = new Set();
+  const mis = DB.turnos
+    .filter(t => t.codigo && t.codigo.trim().toLowerCase() === codigo)
+    .filter(t => {
+      const clave = t.dia_id + '|' + t.tipo;
+      if (vistos.has(clave)) return false;
+      vistos.add(clave);
+      return true;
+    });
   if (mis.length){
     permisos = {tipo:'turno', turnos:mis};
     aviso('#avisoCobros', `Código correcto: ${mis.length} servicio(s) a tu cargo.`, 'ok');
@@ -362,7 +372,10 @@ function pintarCobros(){
         .map(a => ({a, p: persona(a.persona_id)})).filter(x => x.p)
         .sort((x, y) => x.p.nombre.localeCompare(y.p.nombre));
 
-      html += `<div class="panel"><h2>${esc(fechaLarga(d.fecha))} · ${servicio}</h2>`;
+      const equipo = personasTurno(t.dia_id, t.tipo);
+      html += `<div class="panel"><h2>${esc(fechaLarga(d.fecha))} · ${servicio}</h2>
+        <p style="margin-top:0;color:var(--suave);font-size:.85rem">
+          A cargo de ${esc(equipo.map(p => p.nombre).join(' · '))}</p>`;
       if (!lista.length) html += '<p class="vacio">Nadie apuntado.</p>';
       else {
         html += '<div class="tabla-wrap"><table><thead><tr><th>Persona</th><th>Modalidad</th><th class="num">Precio</th><th>Ha pagado</th></tr></thead><tbody>';

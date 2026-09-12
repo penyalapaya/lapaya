@@ -334,17 +334,30 @@ function pintarTurnosAdmin(){
 
   for (const d of DB.dias){
     html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
-    for (const tipo of tipos){
-      const t = DB.turnos.find(x => x.dia_id === d.id && x.tipo === tipo);
-      html += `<td><select onchange="ponerTurno(${d.id}, '${tipo}', this.value)">
-        <option value="">—</option>
-        ${activos().map(p => `<option value="${p.id}" ${t && t.persona_id === p.id ? 'selected' : ''}>${esc(p.nombre)}</option>`).join('')}
-      </select></td>`;
-    }
+    for (const tipo of tipos) html += celdaTurno(d, tipo);
     html += '</tr>';
   }
   html += '</tbody></table></div></div>';
   $('#adminTurnos').innerHTML = html;
+}
+
+// Celda con los asignados al turno y un selector para añadir más
+function celdaTurno(d, tipo){
+  const puestos = personasTurno(d.id, tipo);
+  const libres  = activos().filter(p => !puestos.some(q => q.id === p.id));
+
+  let html = '<td style="min-width:170px">';
+  for (const p of puestos){
+    html += `<span class="chip">${esc(p.nombre)}
+      <button title="Quitar" onclick="quitarTurno(${d.id}, '${tipo}', ${p.id})">×</button></span>`;
+  }
+  if (libres.length){
+    html += `<select class="anadir" onchange="anadirTurno(${d.id}, '${tipo}', this.value); this.value='';">
+      <option value="">+ añadir</option>
+      ${libres.map(p => `<option value="${p.id}">${esc(p.nombre)}</option>`).join('')}
+    </select>`;
+  }
+  return html + '</td>';
 }
 
 // Montaje y recogida: grupos de personas, sin día
@@ -398,25 +411,26 @@ async function guardarClave(clave, valor){
   DB.config[clave] = valor;
 }
 
-async function ponerTurno(dia_id, tipo, persona_id){
-  const existente = DB.turnos.find(x => x.dia_id === dia_id && x.tipo === tipo);
+async function anadirTurno(dia_id, tipo, persona_id){
+  if (!persona_id) return;
+  const fila = {dia_id, tipo, persona_id: Number(persona_id)};
 
-  if (!persona_id){
-    if (existente){
-      const {error} = await sb.from('turnos').delete().eq('id', existente.id);
-      if (error) return aviso('#estado', error.message, 'err');
-    }
-  } else if (existente){
-    const {error} = await sb.from('turnos').update({persona_id: Number(persona_id)}).eq('id', existente.id);
-    if (error) return aviso('#estado', error.message, 'err');
-  } else {
-    // los turnos de cocina reciben un código para que el responsable cobre
-    const fila = {dia_id, tipo, persona_id: Number(persona_id)};
-    if (tipo.startsWith('cocina')) fila.codigo = palabraAleatoria();
-    const {error} = await sb.from('turnos').insert(fila);
-    if (error) return aviso('#estado', error.message, 'err');
-  }
-  await recargar();
+  // Los responsables de una misma cocina comparten el código de cobro
+  if (tipo.startsWith('cocina')) fila.codigo = codigoTurno(dia_id, tipo) || palabraAleatoria();
+
+  const {data, error} = await sb.from('turnos').insert(fila).select();
+  if (error) return aviso('#estado', error.message, 'err');
+  DB.turnos.push(data[0]);
+  pintarTurnosAdmin(); pintarConfig();
+}
+
+async function quitarTurno(dia_id, tipo, persona_id){
+  const {error} = await sb.from('turnos').delete()
+    .eq('dia_id', dia_id).eq('tipo', tipo).eq('persona_id', persona_id);
+  if (error) return aviso('#estado', error.message, 'err');
+  DB.turnos = DB.turnos.filter(t =>
+    !(t.dia_id === dia_id && t.tipo === tipo && t.persona_id === persona_id));
+  pintarTurnosAdmin(); pintarConfig();
 }
 
 const PALABRAS = ['paella','tomate','higuera','naranja','sarten','cuchara','romero','alcachofa','bodega',
@@ -491,25 +505,38 @@ function pintarConfig(){
   $('#cNombre').value   = DB.config['nombre_peña'] || '';
   $('#cTesorero').value = DB.config['codigo_tesorero'] || '';
 
-  const cocinas = DB.turnos.filter(t => t.tipo.startsWith('cocina') && t.persona_id);
-  if (!cocinas.length){ $('#tablaCodigos').innerHTML = '<p class="vacio">Asigna turnos de cocina y aquí saldrán sus códigos.</p>'; return; }
+  // Un código por cocina, compartido por todos sus responsables
+  const servicios = [];
+  for (const d of DB.dias){
+    for (const tipo of ['cocina_comida','cocina_cena']){
+      const gente = personasTurno(d.id, tipo);
+      if (gente.length) servicios.push({d, tipo, gente, codigo: codigoTurno(d.id, tipo)});
+    }
+  }
 
-  let html = '<div class="tabla-wrap"><table><thead><tr><th>Día</th><th>Servicio</th><th>Responsable</th><th>Código</th></tr></thead><tbody>';
-  for (const t of cocinas){
-    const d = dia(t.dia_id), p = persona(t.persona_id);
-    html += `<tr><td>${esc(fechaCorta(d.fecha))}</td>
-      <td>${t.tipo === 'cocina_cena' ? 'Cena' : 'Comida'}</td>
-      <td>${p ? esc(p.nombre) : '—'}</td>
-      <td><input value="${esc(t.codigo || '')}" style="width:130px"
-            onchange="editarCodigo(${t.id}, this.value)"></td></tr>`;
+  if (!servicios.length){
+    $('#tablaCodigos').innerHTML = '<p class="vacio">Asigna turnos de cocina y aquí saldrán sus códigos.</p>';
+    return;
+  }
+
+  let html = '<div class="tabla-wrap"><table><thead><tr><th>Día</th><th>Servicio</th><th>Responsables</th><th>Código</th></tr></thead><tbody>';
+  for (const s of servicios){
+    html += `<tr><td>${esc(fechaCorta(s.d.fecha))}</td>
+      <td>${s.tipo === 'cocina_cena' ? 'Cena' : 'Comida'}</td>
+      <td>${s.gente.map(p => esc(p.nombre)).join(' · ')}</td>
+      <td><input value="${esc(s.codigo)}" style="width:130px"
+            onchange="editarCodigo(${s.d.id}, '${s.tipo}', this.value)"></td></tr>`;
   }
   $('#tablaCodigos').innerHTML = html + '</tbody></table></div>';
 }
 
-async function editarCodigo(turno_id, valor){
-  const {error} = await sb.from('turnos').update({codigo: valor.trim().toLowerCase()}).eq('id', turno_id);
+async function editarCodigo(dia_id, tipo, valor){
+  const codigo = valor.trim().toLowerCase();
+  const {error} = await sb.from('turnos').update({codigo})
+    .eq('dia_id', dia_id).eq('tipo', tipo);
   if (error) return aviso('#estado', error.message, 'err');
-  await recargar();
+  for (const t of turnosPorTipo(dia_id, tipo)) t.codigo = codigo;
+  pintarConfig();
 }
 
 async function guardarConfig(){

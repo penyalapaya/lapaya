@@ -78,6 +78,8 @@ create table turnos (
   notas       text
 );
 create index on turnos (dia_id);
+-- Varias personas por turno, pero cada una una sola vez
+create unique index turnos_unicos on turnos (dia_id, tipo, persona_id);
 
 -- ------------------------------------------------------------
 -- TAREAS de peña: montaje (antes de fiestas) y recogida (después).
