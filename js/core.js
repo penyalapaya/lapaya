@@ -15,6 +15,12 @@ const MODALIDADES = {
   con_sobremesa:  'Con sobremesa',
   solo_sobremesa: 'Solo sobremesa'
 };
+// Icono de cada modalidad, para los listados de la pestaña "Hoy"
+const ICONO_MODALIDAD = {
+  completo:       '\u{1F374}',
+  con_sobremesa:  '\u{1F374}\u{1F942}',
+  solo_sobremesa: '\u{1F942}'
+};
 // Turnos de cada día
 const TIPOS_TURNO = {
   limpieza:     'Limpieza',
@@ -150,6 +156,15 @@ function totalPorCategoria(){
     sobremesa += parteSobremesa(a);
   }
   return {comida, sobremesa};
+}
+
+// Dinero que mueve un servicio concreto de un día: lo que cuesta la comida,
+// lo que cuesta la sobremesa y el total de los dos.
+function dineroServicio(dia_id, servicio){
+  const lista = apuntesDe(dia_id, servicio);
+  const comida    = lista.reduce((s, a) => s + parteComida(a), 0);
+  const sobremesa = lista.reduce((s, a) => s + parteSobremesa(a), 0);
+  return {comida, sobremesa, completo: comida + sobremesa, n: lista.length};
 }
 
 // ---------- cálculo de cuentas ----------

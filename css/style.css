@@ -332,6 +332,55 @@ label{
 .saldado{color:var(--verde-500);  font-weight:700}
 
 /* ============================================================
+   Listado de apuntados (pestaña Hoy)
+   ============================================================ */
+.gente{
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+.apuntado{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:5px 11px;
+  background:var(--verde-50);
+  border:1px solid var(--verde-100);
+  border-radius:99px;
+  font-size:.88rem;
+  font-weight:500;
+  white-space:nowrap;
+}
+.apuntado .pill{margin-left:2px}
+.icono{
+  font-size:.95rem;
+  line-height:1;
+  letter-spacing:-.06em;
+}
+.leyenda{
+  display:flex;
+  flex-wrap:wrap;
+  gap:14px;
+  margin-top:14px;
+  padding-top:12px;
+  border-top:1px solid var(--linea);
+  font-size:.78rem;
+  color:var(--tinta-70);
+}
+.leyenda span{display:inline-flex; align-items:center; gap:5px}
+.cuenta{
+  display:inline-block;
+  min-width:24px;
+  padding:1px 8px;
+  border-radius:99px;
+  background:var(--verde-100);
+  color:var(--verde-900);
+  font-size:.8rem;
+  font-weight:700;
+  vertical-align:middle;
+}
+
+/* ============================================================
    Navegador de días
    ============================================================ */
 .navdia{

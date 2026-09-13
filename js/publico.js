@@ -86,42 +86,36 @@ function pintarDia(){
   html += '</div>';
 
   // quién viene
-  if (d.hay_comida) html += listaApuntados('Comen', comen, d, 'comida');
-  if (d.hay_cena)   html += listaApuntados('Cenan', cenan, d, 'cena');
+  if (d.hay_comida) html += listaApuntados('Comen', comen);
+  if (d.hay_cena)   html += listaApuntados('Cenan', cenan);
 
   $('#resumenDia').innerHTML = html;
 }
 
 function tarjetaRecuento(titulo, lista, menu){
-  const conSob = lista.filter(a => a.modalidad !== 'completo').length;
   const dineroComida = lista.reduce((s, a) => s + parteComida(a), 0);
   return `<div class="panel">
     <h3 style="margin-top:0">${titulo}</h3>
     <div class="dato">${lista.length}<small>personas en total</small></div>
-    <div style="margin-top:6px;font-size:.85rem;color:var(--tinta-70)">${conSob} se quedan a la sobremesa</div>
-    <div style="margin-top:6px;font-weight:700;color:var(--verde-900)">${eur(dineroComida)}<span style="font-weight:400;color:var(--tinta-70)"> para cocinar</span></div>
+    <div style="margin-top:6px;font-weight:700;color:var(--verde-900)">${eur(dineroComida)}<span style="font-weight:400;color:var(--tinta-70)"> para cocinar, incluye bebida y postre</span></div>
     ${menu ? `<div style="margin-top:10px"><b>Menú:</b> ${esc(menu)}</div>` : ''}
   </div>`;
 }
 
-function listaApuntados(titulo, lista, d, servicio){
+function listaApuntados(titulo, lista){
   if (!lista.length) return `<div class="panel"><h2>${titulo}</h2><p class="vacio">Nadie apuntado todavía.</p></div>`;
-  const filas = lista
+  const gente = lista
     .map(a => ({a, p: persona(a.persona_id)}))
     .filter(x => x.p)
     .sort((x, y) => x.p.nombre.localeCompare(y.p.nombre))
-    .map(({a, p}) => `<tr>
-        <td>${esc(p.nombre)} ${p.tipo === 'invitado' ? '<span class="pill inv">invitado</span>' : ''}</td>
-        <td>${esc(MODALIDADES[a.modalidad])}</td>
-        <td class="num">${eur(precioApunte(a))}</td>
-        <td>${a.pagado ? '<span class="pill ok">pagado</span>' : '<span class="pill no">pendiente</span>'}</td>
-      </tr>`).join('');
-  const total = lista.reduce((s, a) => s + precioApunte(a), 0);
-  return `<div class="panel"><h2>${titulo}</h2><div class="tabla-wrap"><table>
-      <thead><tr><th>Persona</th><th>Modalidad</th><th class="num">Precio</th><th>Cobro</th></tr></thead>
-      <tbody>${filas}</tbody>
-      <tfoot><tr class="total"><td colspan="2">Total a recaudar</td><td class="num">${eur(total)}</td><td></td></tr></tfoot>
-    </table></div></div>`;
+    .map(({a, p}) => `<span class="apuntado" title="${esc(MODALIDADES[a.modalidad])}">
+        <span class="icono">${ICONO_MODALIDAD[a.modalidad]}</span>${esc(p.nombre)}${
+        p.tipo === 'invitado' ? '<span class="pill inv">inv.</span>' : ''}</span>`).join('');
+  return `<div class="panel"><h2>${titulo} <span class="cuenta">${lista.length}</span></h2>
+    <div class="gente">${gente}</div>
+    <div class="leyenda">${Object.keys(ICONO_MODALIDAD)
+      .map(m => `<span><span class="icono">${ICONO_MODALIDAD[m]}</span>${esc(MODALIDADES[m])}</span>`).join('')}</div>
+  </div>`;
 }
 
 // ---------------- pestaña CALENDARIO ----------------
@@ -238,6 +232,8 @@ function pintarCuentas(){
   }
   html += '</div>';
 
+  html += tablaDineroPorDia();
+
   html += `<div class="panel"><h2>Cuentas por persona</h2><div class="tabla-wrap"><table><thead><tr>
       <th>Persona</th><th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Generales</th>
       <th class="num">Total</th><th class="num">Pagado</th><th class="num">Debe</th></tr></thead><tbody>`;
@@ -262,6 +258,53 @@ function pintarCuentas(){
       <td class="num">${eur(sum('debe'))}</td></tr></tfoot></table></div></div>`;
 
   $('#cuentas').innerHTML = html;
+}
+
+// Dinero de cada día, desglosado por servicio: comida, sobremesa y completo
+function tablaDineroPorDia(){
+  if (!DB.dias.length) return '';
+
+  let html = `<div class="panel"><h2>Dinero de cada día</h2><div class="tabla-wrap"><table>
+    <thead>
+      <tr>
+        <th rowspan="2">Día</th>
+        <th colspan="3">Comida</th>
+        <th colspan="3">Cena</th>
+      </tr>
+      <tr>
+        <th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Completo</th>
+        <th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Completo</th>
+      </tr>
+    </thead><tbody>`;
+
+  const tot = {comida:{comida:0, sobremesa:0, completo:0}, cena:{comida:0, sobremesa:0, completo:0}};
+
+  for (const d of DB.dias){
+    html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
+    for (const servicio of ['comida','cena']){
+      const hay = servicio === 'comida' ? d.hay_comida : d.hay_cena;
+      if (!hay){
+        html += '<td colspan="3" style="color:var(--tinta-40)">no hay</td>';
+        continue;
+      }
+      const m = dineroServicio(d.id, servicio);
+      tot[servicio].comida    += m.comida;
+      tot[servicio].sobremesa += m.sobremesa;
+      tot[servicio].completo  += m.completo;
+      html += `<td class="num">${eur(m.comida)}</td>
+        <td class="num">${eur(m.sobremesa)}</td>
+        <td class="num"><b>${eur(m.completo)}</b></td>`;
+    }
+    html += '</tr>';
+  }
+
+  html += `</tbody><tfoot><tr class="total">
+      <td>TOTAL</td>
+      <td class="num">${eur(tot.comida.comida)}</td><td class="num">${eur(tot.comida.sobremesa)}</td><td class="num">${eur(tot.comida.completo)}</td>
+      <td class="num">${eur(tot.cena.comida)}</td><td class="num">${eur(tot.cena.sobremesa)}</td><td class="num">${eur(tot.cena.completo)}</td>
+    </tr></tfoot></table></div></div>`;
+
+  return html;
 }
 
 // ---------------- pestaña LO MÍO ----------------
