@@ -322,6 +322,11 @@ label{
 .aviso.ok {background:var(--verde-100); color:var(--verde-900); border-color:#bfe3cd}
 .aviso.err{background:var(--rojo-100);  color:var(--rojo);      border-color:#f2c9c2}
 
+.nota{
+  margin:-4px 0 12px;
+  font-size:.85rem;
+  color:var(--tinta-70);
+}
 .vacio{
   color:var(--tinta-40);
   font-size:.87rem;

@@ -232,7 +232,7 @@ function pintarCuentas(){
   }
   html += '</div>';
 
-  html += tablaDineroPorDia();
+  html += tablaPreciosPorDia();
 
   html += `<div class="panel"><h2>Cuentas por persona</h2><div class="tabla-wrap"><table><thead><tr>
       <th>Persona</th><th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Generales</th>
@@ -260,11 +260,14 @@ function pintarCuentas(){
   $('#cuentas').innerHTML = html;
 }
 
-// Dinero de cada día, desglosado por servicio: comida, sobremesa y completo
-function tablaDineroPorDia(){
+// Precios de cada día: lo que paga una persona por comer, por quedarse solo
+// a la sobremesa, o por el completo, tanto en la comida como en la cena.
+function tablaPreciosPorDia(){
   if (!DB.dias.length) return '';
 
-  let html = `<div class="panel"><h2>Dinero de cada día</h2><div class="tabla-wrap"><table>
+  let html = `<div class="panel"><h2>Precios de cada día</h2>
+    <p class="nota">Lo que paga cada persona según a lo que venga.</p>
+    <div class="tabla-wrap"><table>
     <thead>
       <tr>
         <th rowspan="2">Día</th>
@@ -272,12 +275,10 @@ function tablaDineroPorDia(){
         <th colspan="3">Cena</th>
       </tr>
       <tr>
-        <th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Completo</th>
-        <th class="num">Comida</th><th class="num">Sobremesa</th><th class="num">Completo</th>
+        <th class="num">Solo comer</th><th class="num">Solo sobremesa</th><th class="num">Completo</th>
+        <th class="num">Solo cenar</th><th class="num">Solo sobremesa</th><th class="num">Completo</th>
       </tr>
     </thead><tbody>`;
-
-  const tot = {comida:{comida:0, sobremesa:0, completo:0}, cena:{comida:0, sobremesa:0, completo:0}};
 
   for (const d of DB.dias){
     html += `<tr><td><b>${esc(fechaCorta(d.fecha))}</b></td>`;
@@ -287,23 +288,15 @@ function tablaDineroPorDia(){
         html += '<td colspan="3" style="color:var(--tinta-40)">no hay</td>';
         continue;
       }
-      const m = dineroServicio(d.id, servicio);
-      tot[servicio].comida    += m.comida;
-      tot[servicio].sobremesa += m.sobremesa;
-      tot[servicio].completo  += m.completo;
-      html += `<td class="num">${eur(m.comida)}</td>
-        <td class="num">${eur(m.sobremesa)}</td>
-        <td class="num"><b>${eur(m.completo)}</b></td>`;
+      const pr = preciosServicio(d, servicio);
+      html += `<td class="num">${eur(pr.comida)}</td>
+        <td class="num">${eur(pr.sobremesa)}</td>
+        <td class="num"><b>${eur(pr.completo)}</b></td>`;
     }
     html += '</tr>';
   }
 
-  html += `</tbody><tfoot><tr class="total">
-      <td>TOTAL</td>
-      <td class="num">${eur(tot.comida.comida)}</td><td class="num">${eur(tot.comida.sobremesa)}</td><td class="num">${eur(tot.comida.completo)}</td>
-      <td class="num">${eur(tot.cena.comida)}</td><td class="num">${eur(tot.cena.sobremesa)}</td><td class="num">${eur(tot.cena.completo)}</td>
-    </tr></tfoot></table></div></div>`;
-
+  html += '</tbody></table></div></div>';
   return html;
 }
 

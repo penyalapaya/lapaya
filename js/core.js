@@ -158,13 +158,13 @@ function totalPorCategoria(){
   return {comida, sobremesa};
 }
 
-// Dinero que mueve un servicio concreto de un día: lo que cuesta la comida,
-// lo que cuesta la sobremesa y el total de los dos.
-function dineroServicio(dia_id, servicio){
-  const lista = apuntesDe(dia_id, servicio);
-  const comida    = lista.reduce((s, a) => s + parteComida(a), 0);
-  const sobremesa = lista.reduce((s, a) => s + parteSobremesa(a), 0);
-  return {comida, sobremesa, completo: comida + sobremesa, n: lista.length};
+// Lo que paga cada persona en un servicio concreto de un día, segun a lo que
+// venga: solo a comer, solo a la sobremesa, o al completo.
+function preciosServicio(d, servicio){
+  if (!d) return {comida:0, sobremesa:0, completo:0};
+  return servicio === 'comida'
+    ? {comida:Number(d.p_comida) || 0, sobremesa:Number(d.p_sob_comida) || 0, completo:Number(d.p_comida_sob) || 0}
+    : {comida:Number(d.p_cena)   || 0, sobremesa:Number(d.p_sob_cena)   || 0, completo:Number(d.p_cena_sob)   || 0};
 }
 
 // ---------- cálculo de cuentas ----------
